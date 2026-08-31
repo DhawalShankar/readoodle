@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Rental } from "@/types";
 import { FONT_DISPLAY, FONT_MONO, INK, PAPER } from "@/lib/theme";
-import { extendRental, fetchMyRentals, returnRental } from "@/lib/api";
+import { extendRental, fetchMyRentals } from "@/lib/api";
 import RentalCard from "@/components/rental/RentalCard";
 
 export default function MyRentalsPage() {
@@ -33,16 +33,6 @@ export default function MyRentalsPage() {
       cancelled = true;
     };
   }, [status, tab]);
-
-  async function handleReturn(rentalId: string) {
-    try {
-      await returnRental(rentalId);
-      const data = await fetchMyRentals(tab);
-      setRentals(data);
-    } catch (err: any) {
-      alert(err?.message || "Failed to mark rental as returned.");
-    }
-  }
 
   async function handleExtend(rentalId: string) {
     try {
@@ -105,7 +95,7 @@ export default function MyRentalsPage() {
           )}
 
           {rentals.map((rental) => (
-            <RentalCard key={rental.id} rental={rental} onReturn={handleReturn} onExtend={handleExtend} />
+            <RentalCard key={rental.id} rental={rental} onExtend={handleExtend} />
           ))}
         </div>
       </div>

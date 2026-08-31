@@ -12,11 +12,10 @@ interface EnhancedRentalProps {
     totalPayableOnReturn?: number;
     pickupLocation?: string;
   };
-  onReturn?: (rentalId: string) => void;
   onExtend?: (rentalId: string) => void;
 }
 
-export default function RentalCard({ rental, onReturn, onExtend }: EnhancedRentalProps) {
+export default function RentalCard({ rental, onExtend }: EnhancedRentalProps) {
   const remaining = daysUntil(rental.dueDateISO);
   const isReturned = rental.status === "returned";
   const isPending = (rental.status as any) === "pending_approval";
@@ -26,9 +25,10 @@ export default function RentalCard({ rental, onReturn, onExtend }: EnhancedRenta
 
   const rentalFee = rental.rentalFeeTotal || 50;
   const totalPayableOnReturn = rental.totalPayableOnReturn || (rentalFee + lateFine);
+  const dropOffPoint = rental.pickupLocation || rental.book.lister?.pickupPoint?.label || "Readoodle Pickup Point";
 
   return (
-    <div className="flex flex-col gap-4 border border-[#20304D]/15 bg-[#FBF7EC] p-5 rounded-sm">
+    <div className="flex flex-col gap-4 border border-[#20304D]/15 bg-[#FBF7EC] p-5 rounded-sm shadow-sm">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
           <div className="h-16 w-12 shrink-0 rounded-sm shadow-sm flex items-center justify-center text-white text-xs font-bold p-1 text-center" style={{ backgroundColor: rental.book.coverColor || "#5B7B9A" }}>
@@ -45,29 +45,40 @@ export default function RentalCard({ rental, onReturn, onExtend }: EnhancedRenta
                 {isReturned ? "✓ Returned" : overdue ? `⚠️ Overdue (${overdueDays}d late)` : isPending ? "⌛ Pending Approval" : "✓ Active"}
               </Badge>
 
-              <span style={{ fontFamily: FONT_MONO }} className="text-xs font-semibold text-[#20304D]/80">
-                📅 Due: {formatDueDate(rental.dueDateISO)}
-              </span>
+              {isReturned ? (
+                <span style={{ fontFamily: FONT_MONO }} className="text-xs text-[#20304D]/70 font-medium">
+                  ✓ Returned on {rental.returnedOnISO ? formatDueDate(rental.returnedOnISO) : "Drop-off Point"}
+                </span>
+              ) : (
+                <span style={{ fontFamily: FONT_MONO }} className="text-xs font-semibold text-[#20304D]/80">
+                  📅 Due Date: {formatDueDate(rental.dueDateISO)}
+                </span>
+              )}
             </div>
           </div>
         </div>
 
         <div className="flex flex-col items-start gap-2 sm:items-end">
-          {!isReturned && (
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={() => onExtend?.(rental.id)}>
-                Extend (+1 Wk)
-              </Button>
-              <Button variant="filled" onClick={() => onReturn?.(rental.id)}>
-                Mark returned
-              </Button>
-            </div>
+          {!isReturned && onExtend && (
+            <Button variant="outline" onClick={() => onExtend(rental.id)}>
+              Extend (+1 Wk)
+            </Button>
           )}
         </div>
       </div>
 
-      {/* Due Date & Charges Summary Box */}
-      <div className="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#F4F1EA] p-3 rounded text-xs">
+      {/* Return Drop-Off Location */}
+      <div className="text-xs text-[#20304D]/80 bg-[#F4F1EA] px-3 py-2 rounded flex items-center justify-between">
+        <p>
+          <strong>📍 Drop-off / Return Point:</strong> {dropOffPoint}
+        </p>
+        <span style={{ fontFamily: FONT_MONO }} className="text-[#20304D]/60 hidden sm:inline">
+          7-Day Rental Period
+        </span>
+      </div>
+
+      {/* Charges & Due Summary Box */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[#F4F1EA] p-3 rounded text-xs">
         <div>
           <p className="text-[#20304D]/60 uppercase tracking-wider font-semibold" style={{ fontFamily: FONT_MONO }}>
             Rental Fee
@@ -88,7 +99,7 @@ export default function RentalCard({ rental, onReturn, onExtend }: EnhancedRenta
 
         <div>
           <p className="text-[#20304D]/60 uppercase tracking-wider font-semibold" style={{ fontFamily: FONT_MONO }}>
-            Total Payable On Return
+            {isReturned ? "Total Paid" : "Total Due On Return"}
           </p>
           <p className="font-bold text-sm mt-0.5" style={{ color: overdue ? CORAL : INK }}>
             {formatRupees(totalPayableOnReturn)}
