@@ -69,6 +69,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ bo
   if (body.phoneNumber) updateFields["lister.phoneNumber"] = body.phoneNumber;
   if (body.pickupLabel) updateFields["lister.pickupPoint.label"] = body.pickupLabel;
   if (body.pickupAddressLine) updateFields["lister.pickupPoint.addressLine"] = body.pickupAddressLine;
+  if (body.pickupCity) updateFields["lister.pickupPoint.city"] = body.pickupCity;
   if (body.pickupTimeSlot) updateFields["lister.pickupPoint.pickupTimeSlot"] = body.pickupTimeSlot;
 
   const result = await collection.findOneAndUpdate(

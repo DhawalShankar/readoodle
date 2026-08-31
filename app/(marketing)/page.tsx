@@ -79,6 +79,20 @@ export default function Home() {
   const hasRentals = recentRentals.length > 0;
   const colors = ['#5B7B9A', SAGE, CORAL];
 
+  // Renders the fetched cities list naturally in body copy, regardless of
+  // how many cities are live: "Kanpur" / "Kanpur and Lucknow" /
+  // "Kanpur, Lucknow and 2 other cities".
+  const cityPhrase =
+    cities.length === 0
+      ? 'Kanpur'
+      : cities.length === 1
+      ? cities[0]
+      : cities.length === 2
+      ? `${cities[0]} and ${cities[1]}`
+      : cities.length <= 4
+      ? `${cities.slice(0, -1).join(', ')} and ${cities[cities.length - 1]}`
+      : `${cities.slice(0, 2).join(', ')} and ${cities.length - 2} other cities`;
+
   return (
     <div style={{ backgroundColor: PAPER, color: INK }}>
       <div
@@ -110,7 +124,7 @@ export default function Home() {
           </h1>
 
           <p className="mt-6 max-w-md text-lg leading-relaxed text-[#20304D]/80">
-            Readoodle is a community book rental shelf in Kanpur. Rent any book for <strong>₹50 for 7 days</strong>, or list your own books and earn <strong>₹49 per rental</strong> directly to your UPI.
+            Readoodle is a community book rental shelf in {cityPhrase}. Rent any book for <strong>₹50 for 7 days</strong>, or list your own books and earn <strong>₹49 per rental</strong> directly to your UPI.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -172,7 +186,7 @@ export default function Home() {
               Pay a single refundable ₹500 security deposit on your profile page. This deposit unlocks unlimited future book rentals on Readoodle and protects book owners.
             </Step>
             <Step n="02" title="2. Rent Any Book for ₹50">
-              Browse any book in Kanpur and submit your rental request for ₹50 per 7 days. Once verified, you get the Lister&rsquo;s address line for easy in-person pickup.
+              Browse any book in {cityPhrase} and submit your rental request for ₹50 per 7 days. Once verified, you get the Lister&rsquo;s address line for easy in-person pickup.
             </Step>
             <Step n="03" title="3. Read, Return & Keep Doodle">
               Enjoy reading for 7 days. Return the book to the lister&rsquo;s pickup point on time (late fee: ₹10/day). The bookmark that comes with the book is yours to keep!

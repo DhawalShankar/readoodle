@@ -27,6 +27,7 @@ type FormState = {
   coverColor: string;
   pickupLabel: string;
   pickupAddressLine: string;
+  pickupCity: string;
   pickupTimeSlot: string;
   upiId: string;
   phoneNumber: string;
@@ -41,6 +42,7 @@ const EMPTY: FormState = {
   coverColor: COVER_COLORS[0],
   pickupLabel: "",
   pickupAddressLine: "",
+  pickupCity: "Kanpur",
   pickupTimeSlot: "",
   upiId: "",
   phoneNumber: "",
@@ -84,6 +86,7 @@ export default function ListingForm() {
       form.author.trim().length > 0 &&
       form.pickupLabel.trim().length > 0 &&
       form.pickupAddressLine.trim().length > 0 &&
+      form.pickupCity.trim().length > 0 &&
       form.pickupTimeSlot.trim().length > 0 &&
       (isOwner || (form.upiId.trim().length > 0 && form.phoneNumber.trim().length > 0))
     );
@@ -128,7 +131,7 @@ export default function ListingForm() {
         coverColor: form.coverColor,
         pickupLabel: form.pickupLabel.trim(),
         pickupAddressLine: form.pickupAddressLine.trim(),
-        pickupCity: "Kanpur",
+        pickupCity: form.pickupCity.trim(),
         pickupTimeSlot: form.pickupTimeSlot.trim(),
         upiId: trimmedUpi,
         phoneNumber: trimmedPhone,
@@ -267,7 +270,7 @@ export default function ListingForm() {
 
       <DashedCard className="space-y-4">
         <p style={{ fontFamily: FONT_MONO, color: INK }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
-          Pickup point · Kanpur
+          Pickup point
         </p>
 
         <Field label="Pickup point name">
@@ -279,14 +282,25 @@ export default function ListingForm() {
           />
         </Field>
 
-        <Field label="Address">
-          <input
-            value={form.pickupAddressLine}
-            onChange={(e) => update("pickupAddressLine", e.target.value)}
-            placeholder="Street / landmark — shown to renters after checkout"
-            className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
-          />
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Address">
+            <input
+              value={form.pickupAddressLine}
+              onChange={(e) => update("pickupAddressLine", e.target.value)}
+              placeholder="Street / landmark — shown to renters after checkout"
+              className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
+            />
+          </Field>
+
+          <Field label="City">
+            <input
+              value={form.pickupCity}
+              onChange={(e) => update("pickupCity", e.target.value)}
+              placeholder="e.g. Kanpur"
+              className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
+            />
+          </Field>
+        </div>
 
         <Field label="Pickup time slot">
           <input
