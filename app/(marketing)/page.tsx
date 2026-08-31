@@ -43,9 +43,23 @@ interface Rental {
 
 export default function Home() {
   const [recentRentals, setRecentRentals] = useState<Rental[]>([]);
+  const [cities, setCities] = useState<string[]>(['Kanpur']);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Fetch cities from pickup locations
+    fetch('/api/cities')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.cities && Array.isArray(data.cities)) {
+          setCities(data.cities);
+        }
+      })
+      .catch(() => {
+        // Fallback to Kanpur if error
+        setCities(['Kanpur']);
+      });
+
     // Fetch recent rentals to display in hero (only approved ones)
     fetch('/api/rentals')
       .then((res) => res.json())
@@ -83,7 +97,7 @@ export default function Home() {
             className="inline-block rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-widest"
             style={{ backgroundColor: `${SAGE}22`, color: SAGE }}
           >
-            Now picking up in Kanpur
+            Now picking up in {cities.join(', ')}
           </span>
 
           <h1
