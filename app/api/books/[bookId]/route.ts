@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { getBooksCollection } from "@/lib/mongodb";
+import { getBooksCollection, getRentalsCollection } from "@/lib/mongodb";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ bookId: string }> }
@@ -74,6 +75,27 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ bo
 
   if (!result) {
     return NextResponse.json({ detail: "This is not your listing or it doesn't exist" }, { status: 403 });
+  }
+
+  // If marked as available, update any active rental for this book to returned
+  if (updateFields.available === true) {
+    try {
+      const rentalsCollection = await getRentalsCollection();
+      await rentalsCollection.updateMany(
+        {
+          bookId,
+          status: { $in: ["approved", "active", "pending_approval"] },
+        },
+        {
+          $set: {
+            status: "returned",
+            returnedOnISO: new Date().toISOString(),
+          },
+        }
+      );
+    } catch (e) {
+      console.error("Failed to update rentals status on book mark available:", e);
+    }
   }
 
   return NextResponse.json(result);

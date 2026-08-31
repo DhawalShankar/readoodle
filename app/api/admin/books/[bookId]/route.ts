@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getBooksCollection } from "@/lib/mongodb";
+import { getBooksCollection, getRentalsCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import { requireAdminSession } from "@/lib/admin";
 
@@ -29,6 +29,26 @@ export async function PATCH(
     await booksCollection.updateOne(filter, {
       $set: { available },
     });
+
+    if (available === true) {
+      try {
+        const rentalsCollection = await getRentalsCollection();
+        await rentalsCollection.updateMany(
+          {
+            bookId,
+            status: { $in: ["approved", "active", "pending_approval"] },
+          },
+          {
+            $set: {
+              status: "returned",
+              returnedOnISO: new Date().toISOString(),
+            },
+          }
+        );
+      } catch (e) {
+        console.error("Failed to update rentals status on admin book mark available:", e);
+      }
+    }
 
     const updatedBook = await booksCollection.findOne(filter);
 
