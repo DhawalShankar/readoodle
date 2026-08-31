@@ -38,13 +38,20 @@ export async function PATCH(
       },
     });
 
-    // If approved, mark the book as rented (unavailable)
-    if (status === "approved" && existingRental.bookId) {
+    // If approved, mark the book as rented (unavailable); if rejected, make it available again
+    if (existingRental.bookId) {
       const booksCollection = await getBooksCollection();
-      await booksCollection.updateOne(
-        { id: existingRental.bookId },
-        { $set: { available: false } }
-      );
+      if (status === "approved") {
+        await booksCollection.updateOne(
+          { id: existingRental.bookId },
+          { $set: { available: false } }
+        );
+      } else if (status === "rejected") {
+        await booksCollection.updateOne(
+          { id: existingRental.bookId },
+          { $set: { available: true } }
+        );
+      }
     }
 
     const updated = await rentalsCollection.findOne(filter);
