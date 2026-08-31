@@ -6,6 +6,7 @@ import { getBooksCollection, getUsersCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 import type { Book, NewListingPayload } from "@/types";
 import { FIXED_RENTAL_PRICE_PER_WEEK, FIXED_SECURITY_DEPOSIT } from "@/lib/constants";
+import { isAdminEmail } from "@/lib/admin-utils";
 
 /** GET /api/books/ — powers BrowsePage's fetchBooks(). Same query params
  *  api.ts already sends: q, genre, availability, pickup_city, max_price, sort. */
@@ -51,29 +52,35 @@ export async function POST(request: NextRequest) {
 
   const payload = (await request.json()) as NewListingPayload;
 
-  const upiId = payload.upiId?.trim();
-  const phoneNumber = payload.phoneNumber?.trim();
+  let upiId = payload.upiId?.trim();
+  let phoneNumber = payload.phoneNumber?.trim();
 
-  if (!upiId || !phoneNumber) {
-    return NextResponse.json(
-      { detail: "UPI ID and Phone Number are mandatory for listing a book." },
-      { status: 400 }
-    );
-  }
+  const isOwner = isAdminEmail(session.user.email);
+  if (isOwner) {
+    if (!upiId) upiId = "cosmoindiaprakashan@upi";
+    if (!phoneNumber) phoneNumber = "9876543210";
+  } else {
+    if (!upiId || !phoneNumber) {
+      return NextResponse.json(
+        { detail: "UPI ID and Phone Number are mandatory for listing a book." },
+        { status: 400 }
+      );
+    }
 
-  if (!upiId.includes("@")) {
-    return NextResponse.json(
-      { detail: "Please provide a valid UPI ID (e.g. username@bank)." },
-      { status: 400 }
-    );
-  }
+    if (!upiId.includes("@")) {
+      return NextResponse.json(
+        { detail: "Please provide a valid UPI ID (e.g. username@bank)." },
+        { status: 400 }
+      );
+    }
 
-  const cleanPhone = phoneNumber.replace(/\D/g, "");
-  if (cleanPhone.length < 10) {
-    return NextResponse.json(
-      { detail: "Please provide a valid 10-digit phone number." },
-      { status: 400 }
-    );
+    const cleanPhone = phoneNumber.replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
+      return NextResponse.json(
+        { detail: "Please provide a valid 10-digit phone number." },
+        { status: 400 }
+      );
+    }
   }
 
   const legacyBookPrice = Number(payload.bookPrice ?? 0);

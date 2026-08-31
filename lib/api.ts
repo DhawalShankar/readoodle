@@ -34,7 +34,7 @@ export function fetchBooks(filters: Partial<BookFilterState> = {}) {
 
 /** GET /books/:id/ */
 export function fetchBook(bookId: string) {
-  return request<Book>(`/books/${bookId}/`);
+  return request<Book>(`/books/${bookId}`);
 }
 
 /** POST /rentals/ — submits a rental request. */
