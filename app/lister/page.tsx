@@ -137,7 +137,7 @@ export default function ListerPage() {
               <div className="p-3 bg-[#F4F1EA] rounded text-xs space-y-1">
                 {isOwner ? (
                   <p className="text-[#20304D]/80">
-                    <strong>👑 Platform Owner Account:</strong> Payout holds do not apply to your listings (dhawalmannu@gmail.com).
+                    <strong>👑 Platform Owner Account:</strong> Payout holds do not apply to your listings (cosmoindiaprakashan@gmail.com).
                   </p>
                 ) : (
                   <>
@@ -173,7 +173,7 @@ export default function ListerPage() {
               </p>
               <p className="text-xs text-[#20304D]/70 mt-1">
                 {isOwner
-                  ? "As the platform owner (dhawalmannu@gmail.com), 100% of rental revenue directly belongs to Readoodle with no payout processing required."
+                  ? "As the platform owner (cosmoindiaprakashan@gmail.com), 100% of rental revenue directly belongs to Readoodle with no payout processing required."
                   : "Admin verifies rental approvals and transfers your earnings directly to your UPI ID within 48 hours."}
               </p>
             </div>

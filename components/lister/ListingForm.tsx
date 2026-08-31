@@ -60,7 +60,7 @@ export default function ListingForm() {
           const userAny = data.user as any;
           setForm((prev) => ({
             ...prev,
-            upiId: prev.upiId || userAny.upiId || (isOwner ? "dhawalmannu@upi" : ""),
+            upiId: prev.upiId || userAny.upiId || (isOwner ? "cosmoindiaprakashan@upi" : ""),
             phoneNumber: prev.phoneNumber || userAny.phoneNumber || (isOwner ? "9876543210" : ""),
           }));
         }
@@ -69,7 +69,7 @@ export default function ListingForm() {
         if (isOwner) {
           setForm((prev) => ({
             ...prev,
-            upiId: prev.upiId || "dhawalmannu@upi",
+            upiId: prev.upiId || "cosmoindiaprakashan@upi",
             phoneNumber: prev.phoneNumber || "9876543210",
           }));
         }
@@ -98,7 +98,7 @@ export default function ListingForm() {
     let trimmedPhone = form.phoneNumber.trim();
 
     if (isOwner) {
-      if (!trimmedUpi) trimmedUpi = "dhawalmannu@upi";
+      if (!trimmedUpi) trimmedUpi = "cosmoindiaprakashan@upi";
       if (!trimmedPhone) trimmedPhone = "9876543210";
     }
 
@@ -256,7 +256,7 @@ export default function ListingForm() {
         </p>
         <p className="text-sm text-[#20304D]/70">
           {isOwner
-            ? "Every rental is ₹50 for 7 days, plus ₹10/day if returned late. As the platform owner (dhawalmannu@gmail.com), 100% of rental revenue directly belongs to Readoodle."
+            ? "Every rental is ₹50 for 7 days, plus ₹10/day if returned late. As the platform owner (cosmoindiaprakashan@gmail.com), 100% of rental revenue directly belongs to Readoodle."
             : "Every rental is ₹50 for 7 days, plus ₹10/day if it comes back late. Readoodle takes a flat 2% commission; the rest lands with you T+2 days after pickup is confirmed."}
         </p>
       </DashedCard>
