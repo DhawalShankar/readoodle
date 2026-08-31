@@ -261,6 +261,14 @@ export default function ListerPage() {
                         : "Mark Available"}
                   </button>
 
+                  <Link
+                    href={`/lister/listings/${book.id}/edit`}
+                    className="text-xs font-medium hover:underline"
+                    style={{ color: INK }}
+                  >
+                    Edit
+                  </Link>
+
                   <button
                     onClick={(e) => handleDelete(e, book.id)}
                     disabled={deletingId === book.id}

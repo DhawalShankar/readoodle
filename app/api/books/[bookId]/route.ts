@@ -64,8 +64,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ bo
   if (body.description) updateFields.description = body.description;
   if (body.genre) updateFields.genre = body.genre;
   if (body.condition) updateFields.condition = body.condition;
+  if (body.coverColor) updateFields.coverColor = body.coverColor;
   if (body.upiId) updateFields["lister.upiId"] = body.upiId;
   if (body.phoneNumber) updateFields["lister.phoneNumber"] = body.phoneNumber;
+  if (body.pickupLabel) updateFields["lister.pickupPoint.label"] = body.pickupLabel;
+  if (body.pickupAddressLine) updateFields["lister.pickupPoint.addressLine"] = body.pickupAddressLine;
+  if (body.pickupTimeSlot) updateFields["lister.pickupPoint.pickupTimeSlot"] = body.pickupTimeSlot;
 
   const result = await collection.findOneAndUpdate(
     { id: bookId, "lister.id": userId },
