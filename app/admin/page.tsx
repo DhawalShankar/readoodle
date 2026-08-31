@@ -16,8 +16,9 @@ import {
   fetchBooks,
   updateAdminBookAvailability,
   fetchAdminListers,
+  updateAdminListerPayout,
 } from "@/lib/api";
-import type { AdminUser, AdminRentalRequest, Book } from "@/types";
+import type { AdminUser, AdminRentalRequest, Book, AdminLister } from "@/types";
 
 export default function AdminDashboardPage() {
   const { data: session, status } = useSession();
@@ -36,7 +37,7 @@ export default function AdminDashboardPage() {
   const [booksLoading, setBooksLoading] = useState(true);
 
   // Listers state
-  const [listers, setListers] = useState<any[]>([]);
+  const [listers, setListers] = useState<AdminLister[]>([]);
   const [listersLoading, setListersLoading] = useState(true);
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -532,7 +533,13 @@ export default function AdminDashboardPage() {
                             {lister.name}
                           </h3>
                           <p className="text-xs text-[#20304D]/70 mt-1">📧 {lister.email}</p>
-                          <p className="text-xs text-[#20304D]/70">📍 {lister.pickupPoint?.label}</p>
+                          <p className="text-xs text-[#20304D]/80 mt-1">
+                            💳 UPI ID: <span className="font-semibold" style={{ color: INK }}>{lister.upiId || "N/A"}</span>
+                          </p>
+                          <p className="text-xs text-[#20304D]/80 mt-0.5">
+                            📱 Phone: <span className="font-semibold" style={{ color: INK }}>{lister.phoneNumber || "N/A"}</span>
+                          </p>
+                          <p className="text-xs text-[#20304D]/70 mt-1">📍 {lister.pickupPoint?.label}</p>
                         </div>
                         <div className="text-right">
                           <p style={{ fontFamily: FONT_MONO, color: SAGE }} className="font-bold text-lg">
@@ -582,11 +589,11 @@ export default function AdminDashboardPage() {
                         <button
                           onClick={() => {
                             // Copy lister details for manual payout tracking
-                            const details = `${lister.name} - ₹${lister.netEarnings.toFixed(2)} - ${lister.email}`;
+                            const details = `${lister.name} - Net: ₹${(lister.netEarnings || 0).toFixed(2)} - UPI: ${lister.upiId || 'N/A'} - Phone: ${lister.phoneNumber || 'N/A'} - Email: ${lister.email}`;
                             navigator.clipboard.writeText(details);
-                            setMessage(`Copied to clipboard: ${lister.name}`);
+                            setMessage(`Copied payout details for ${lister.name} to clipboard.`);
                           }}
-                          className="flex-1 rounded-sm border-2 px-3 py-2 text-xs font-semibold transition-opacity"
+                          className="flex-1 rounded-sm border-2 px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-90"
                           style={{
                             borderColor: SAGE,
                             backgroundColor: SAGE,
@@ -596,26 +603,37 @@ export default function AdminDashboardPage() {
                           📋 Copy Payout Details
                         </button>
                         <button
-                          onClick={() => {
-                            // Mark as paid manually
-                            setListers((prev) =>
-                              prev.map((l) =>
-                                l.id === lister.id
-                                  ? { ...l, payoutReleased: true, lastPayoutDate: new Date().toISOString() }
-                                  : l
-                              )
-                            );
-                            setMessage(`Marked ${lister.name}'s payout as RELEASED.`);
+                          onClick={async () => {
+                            setActionLoading(`lister-${lister.id}`);
+                            try {
+                              const res = await updateAdminListerPayout(lister.id, true);
+                              setListers((prev) =>
+                                prev.map((l) =>
+                                  l.id === lister.id
+                                    ? { ...l, payoutReleased: true, lastPayoutDate: res.lastPayoutDate }
+                                    : l
+                                )
+                              );
+                              setMessage(`Marked ${lister.name}'s payout as RELEASED.`);
+                            } catch (err: any) {
+                              setMessage(`Error updating payout: ${err.message}`);
+                            } finally {
+                              setActionLoading(null);
+                            }
                           }}
-                          className="flex-1 rounded-sm border-2 px-3 py-2 text-xs font-semibold transition-opacity"
+                          disabled={lister.payoutReleased || actionLoading === `lister-${lister.id}`}
+                          className="flex-1 rounded-sm border-2 px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-90 disabled:opacity-50"
                           style={{
                             borderColor: INK,
                             backgroundColor: lister.payoutReleased ? "#D4D4D4" : INK,
                             color: "#FFFFFF",
                           }}
-                          disabled={lister.payoutReleased}
                         >
-                          {lister.payoutReleased ? "✓ Paid" : "Mark as Paid"}
+                          {actionLoading === `lister-${lister.id}`
+                            ? "Updating..."
+                            : lister.payoutReleased
+                              ? "✓ Paid"
+                              : "Mark as Paid"}
                         </button>
                       </div>
                       {lister.lastPayoutDate && (

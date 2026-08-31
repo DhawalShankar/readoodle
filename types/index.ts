@@ -15,6 +15,8 @@ export interface Lister {
   name: string;
   source: ListingSource; // "readoodle" for Readoodle's own inventory
   pickupPoint: PickupPoint;
+  upiId?: string;
+  phoneNumber?: string;
 }
 
 export interface BookmarkDesign {
@@ -89,6 +91,8 @@ export interface NewListingPayload {
   pickupLabel: string;
   pickupAddressLine: string;
   pickupCity: string;
+  upiId: string;
+  phoneNumber: string;
 }
 
 export interface AdminUser {
@@ -111,4 +115,49 @@ export interface AdminRentalRequest {
   pickupLocation: string;
   status: "pending_approval" | "approved" | "rejected";
   createdAt: string;
+}
+
+export interface AdminListerRental {
+  id: string;
+  bookTitle: string;
+  amount: number;
+  commission: number;
+  netAmount: number;
+  createdAt: string;
+}
+
+export interface AdminLister {
+  id: string;
+  name: string;
+  email: string;
+  upiId: string;
+  phoneNumber: string;
+  pickupPoint: PickupPoint;
+  totalRentals: number;
+  totalEarnings: number;
+  platformCommission: number;
+  netEarnings: number;
+  payoutReleased: boolean;
+  lastPayoutDate: string | null;
+  rentals: AdminListerRental[];
+}
+
+export interface ListerStats {
+  totalListings: number;
+  totalRentals: number;
+  grossEarnings: number;
+  platformCommission: number;
+  netEarnings: number;
+  payoutReleased: boolean;
+  lastPayoutDate: string | null;
+  upiId: string;
+  phoneNumber: string;
+  rentals: Array<{
+    id: string;
+    bookTitle: string;
+    amount: number;
+    commission: number;
+    netAmount: number;
+    createdAt: string;
+  }>;
 }

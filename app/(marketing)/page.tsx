@@ -110,26 +110,20 @@ export default function Home() {
           </h1>
 
           <p className="mt-6 max-w-md text-lg leading-relaxed text-[#20304D]/80">
-            Readoodle is a book-rental marketplace — from our shelves or your
-            neighbour&rsquo;s. Every book, every rental, ₹50 for 7 days.
-            Every rental comes with a little hand-doodled bookmark, because a
-            book you&rsquo;re returning deserves a reason to smile.
+            Readoodle is a community book rental shelf in Kanpur. Rent any book for <strong>₹50 for 7 days</strong>, or list your own books and earn <strong>₹49 per rental</strong> directly to your UPI.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-4">
-            <StampButton href="/browse" filled>Browse books</StampButton>
-            <a
-              href="#lister"
-              className="text-[15px] font-semibold underline decoration-dashed decoration-2 underline-offset-4 hover:opacity-70"
-            >
-              List your own books →
-            </a>
+            <StampButton href="/browse" filled>Browse Books to Rent</StampButton>
+            <StampButton href="/lister" inverted={false} filled={false}>List Your Books (Earn ₹49)</StampButton>
           </div>
 
           <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[#20304D]/60">
-            <span style={{ fontFamily: "var(--font-plex-mono)" }}>₹50 / 7 days, every book</span>
+            <span style={{ fontFamily: "var(--font-plex-mono)" }}>📖 ₹50 / 7 days rental</span>
             <Dot />
-            <span style={{ fontFamily: "var(--font-plex-mono)" }}>₹500 one-time security deposit</span>
+            <span style={{ fontFamily: "var(--font-plex-mono)" }}>💵 ₹49 net lister payout (T+2)</span>
+            <Dot />
+            <span style={{ fontFamily: "var(--font-plex-mono)" }}>🔒 ₹500 one-time deposit</span>
           </div>
         </div>
 
@@ -156,27 +150,85 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------- HOW IT WORKS ---------- */}
-      <section id="how" className="relative z-10 border-y border-[#20304D]/15 bg-[#EFE7D2]">
+      {/* ---------- HOW IT WORKS FOR BORROWERS ---------- */}
+      <section id="how-borrowers" className="relative z-10 border-y border-[#20304D]/15 bg-[#EFE7D2]">
         <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 style={{ fontFamily: "var(--font-caveat)" }} className="text-4xl font-semibold">
-            How a rental actually works
-          </h2>
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12">
+            <div>
+              <span style={{ fontFamily: "var(--font-plex-mono)", color: CORAL }} className="text-xs uppercase tracking-[0.2em]">
+                For Readers & Borrowers
+              </span>
+              <h2 style={{ fontFamily: "var(--font-caveat)" }} className="mt-2 text-5xl font-bold">
+                How Renting Works (3 Easy Steps)
+              </h2>
+            </div>
+            <a href="/browse" className="mt-4 md:mt-0 text-sm font-semibold underline decoration-dashed underline-offset-4">
+              Explore Available Books →
+            </a>
+          </div>
 
-          <div className="mt-12 grid gap-10 md:grid-cols-3">
-            <Step n="01" title="Pay your deposit once">
-              A one-time ₹500 refundable security deposit from your profile
-              unlocks renting — pay it once, rent as many books as you like
-              after that.
+          <div className="grid gap-8 md:grid-cols-3">
+            <Step n="01" title="1. One-Time Deposit (₹500)">
+              Pay a single refundable ₹500 security deposit on your profile page. This deposit unlocks unlimited future book rentals on Readoodle and protects book owners.
             </Step>
-            <Step n="02" title="Rent any book, same price">
-              Every book is ₹50 for 7 days. No haggling, no per-book pricing
-              — pick a book, pay ₹50, go.
+            <Step n="02" title="2. Rent Any Book for ₹50">
+              Browse any book in Kanpur and submit your rental request for ₹50 per 7 days. Once verified, you get the Lister&rsquo;s address line for easy in-person pickup.
             </Step>
-            <Step n="03" title="Return it, keep the doodle">
-              Drop it back at the pickup point within 7 days — ₹10/day after
-              that. The bookmark that came with it is yours to keep.
+            <Step n="03" title="3. Read, Return & Keep Doodle">
+              Enjoy reading for 7 days. Return the book to the lister&rsquo;s pickup point on time (late fee: ₹10/day). The bookmark that comes with the book is yours to keep!
             </Step>
+          </div>
+        </div>
+      </section>
+
+      {/* ---------- HOW IT WORKS FOR LISTERS ---------- */}
+      <section id="how-listers" className="relative z-10 border-b border-[#20304D]/15" style={{ backgroundColor: INK }}>
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12">
+            <div>
+              <span style={{ fontFamily: "var(--font-plex-mono)", color: MARIGOLD }} className="text-xs uppercase tracking-[0.2em]">
+                For Book Owners & Listers
+              </span>
+              <h2 style={{ fontFamily: "var(--font-caveat)" }} className="mt-2 text-5xl font-bold text-[#F5EFE0]">
+                How Listing & Earning Works
+              </h2>
+            </div>
+            <StampButton href="/lister" filled inverted>
+              List a Book Now
+            </StampButton>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-3 text-[#F5EFE0]/90">
+            <div className="border border-[#F5EFE0]/15 bg-white/5 p-6 rounded-sm">
+              <span style={{ fontFamily: "var(--font-plex-mono)", color: MARIGOLD }} className="text-sm font-bold">STEP 01</span>
+              <h3 className="mt-2 text-xl font-semibold text-white">List Your Book & Payout Info</h3>
+              <p className="mt-3 text-sm leading-relaxed text-[#F5EFE0]/80">
+                Enter your book title, author, pickup address, and your mandatory <strong>UPI ID</strong> and <strong>Phone Number</strong> so earnings can reach you.
+              </p>
+            </div>
+
+            <div className="border border-[#F5EFE0]/15 bg-white/5 p-6 rounded-sm">
+              <span style={{ fontFamily: "var(--font-plex-mono)", color: MARIGOLD }} className="text-sm font-bold">STEP 02</span>
+              <h3 className="mt-2 text-xl font-semibold text-white">Hand Over at Pickup Point</h3>
+              <p className="mt-3 text-sm leading-relaxed text-[#F5EFE0]/80">
+                When a borrower&rsquo;s rental is approved, keep the book ready at your home, shop, or cafe pickup point for in-person collection.
+              </p>
+            </div>
+
+            <div className="border border-[#F5EFE0]/15 bg-white/5 p-6 rounded-sm">
+              <span style={{ fontFamily: "var(--font-plex-mono)", color: MARIGOLD }} className="text-sm font-bold">STEP 03</span>
+              <h3 className="mt-2 text-xl font-semibold text-white">Receive ₹49 Net Payout (T+2)</h3>
+              <p className="mt-3 text-sm leading-relaxed text-[#F5EFE0]/80">
+                Every rental yields ₹50. Readoodle takes a flat 2% commission (₹1). Your <strong>₹49 net earnings</strong> are transferred directly to your UPI ID within 48 hours!
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-12 p-6 border border-dashed border-[#F5EFE0]/30 bg-white/5 rounded-sm">
+            <p className="text-xs font-semibold uppercase tracking-widest text-[#F5EFE0]/60 mb-2">Book Protection Guarantee</p>
+            <p className="text-sm text-[#F5EFE0]/90">
+              🛡️ Your books are 100% protected against damage or loss by the borrower&rsquo;s ₹500 security deposit held by Readoodle.
+            </p>
           </div>
         </div>
       </section>
@@ -209,59 +261,23 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------- BECOME A LISTER ---------- */}
-      <section id="lister" className="relative z-10 border-y border-[#20304D]/15" style={{ backgroundColor: INK }}>
-        <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-20 md:grid-cols-2">
-          <div>
-            <h2 style={{ fontFamily: "var(--font-caveat)" }} className="text-4xl font-semibold text-[#F5EFE0]">
-              Got books gathering dust?
-            </h2>
-            <p className="mt-4 max-w-md text-[#F5EFE0]/75">
-              List them on Readoodle and keep 98% of every rental — we take
-              a flat 2% cut, nothing more. Flip the &ldquo;list your
-              books&rdquo; toggle in your profile, set your pickup point, and
-              start earning right away — no waiting, no approval.
-            </p>
-            <div className="mt-8">
-              <StampButton href="/lister" filled inverted>
-                Start listing
-              </StampButton>
-            </div>
-          </div>
-
-          <ul className="space-y-4 text-[#F5EFE0]/90">
-            {[
-              "Set your own pickup point — your home, shop, or a cafe you trust.",
-              "Price is fixed for everyone — ₹50/7 days per rental, no pricing decisions to make.",
-              "Get paid automatically — we collect the payment, take our flat 2% cut, and release the rest to you within 2 days of pickup.",
-              "Damage or loss is covered by the renter's ₹500 security deposit, not your pocket.",
-            ].map((item) => (
-              <li key={item} className="flex gap-3 border-b border-[#F5EFE0]/15 pb-4">
-                <span style={{ color: MARIGOLD }} className="mt-1 text-lg leading-none">✓</span>
-                <span className="text-sm leading-relaxed">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* ---------- PRICING STRIP ---------- */}
+      {/* ---------- PRICING & TRANSPARENCY STRIP ---------- */}
       <section className="relative z-10 mx-auto max-w-6xl px-6 py-20">
         <div
-          className="mx-auto max-w-3xl border-2 border-dashed p-8 text-center"
+          className="mx-auto max-w-4xl border-2 border-dashed p-8 text-center"
           style={{ borderColor: INK, backgroundColor: "#FBF7EC" }}
         >
           <p style={{ fontFamily: "var(--font-plex-mono)" }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
-            the fine print, kept short
+            Transparent Pricing & Payout Policy
           </p>
           <div style={{ fontFamily: "var(--font-plex-mono)" }} className="mt-6 grid gap-6 text-sm sm:grid-cols-2 lg:grid-cols-4">
-            <PriceLine label="Rental" value="₹50, every book, 7 days" />
-            <PriceLine label="Security deposit" value="₹500, one-time, refundable" />
-            <PriceLine label="Late return" value="₹10 / day, no cap" />
-            <PriceLine label="Lister commission" value="Flat 2%, T+2 payout" />
+            <PriceLine label="Rental Rate" value="₹50 per 7 days" />
+            <PriceLine label="Security Deposit" value="₹500 (one-time, refundable)" />
+            <PriceLine label="Lister Payout" value="₹49 per rental (T+2)" />
+            <PriceLine label="Platform Commission" value="Flat 2% (₹1)" />
           </div>
-          <p style={{ fontFamily: "var(--font-plex-mono)" }} className="mt-6 text-xs text-[#20304D]/50">
-            Readoodle takes a flat 2% commission on every rental. That&rsquo;s the whole business model.
+          <p style={{ fontFamily: "var(--font-plex-mono)" }} className="mt-6 text-xs text-[#20304D]/60">
+            No hidden charges, no pricing negotiations. Every book rents for ₹50, and every lister earns ₹49 directly to their registered UPI ID within 2 days of rental approval.
           </p>
         </div>
       </section>

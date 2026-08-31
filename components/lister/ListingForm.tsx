@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CORAL, FONT_MONO, INK } from "@/lib/theme";
-import { createListing } from "@/lib/api";
+import { createListing, fetchProfile } from "@/lib/api";
 import Button from "@/components/ui/Button";
 import DashedCard from "@/components/ui/DashedCard";
 
@@ -25,6 +25,8 @@ type FormState = {
   coverColor: string;
   pickupLabel: string;
   pickupAddressLine: string;
+  upiId: string;
+  phoneNumber: string;
 };
 
 const EMPTY: FormState = {
@@ -36,6 +38,8 @@ const EMPTY: FormState = {
   coverColor: COVER_COLORS[0],
   pickupLabel: "",
   pickupAddressLine: "",
+  upiId: "",
+  phoneNumber: "",
 };
 
 export default function ListingForm() {
@@ -44,12 +48,31 @@ export default function ListingForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    fetchProfile()
+      .then((data) => {
+        if (data?.user) {
+          const userAny = data.user as any;
+          if (userAny.upiId || userAny.phoneNumber) {
+            setForm((prev) => ({
+              ...prev,
+              upiId: prev.upiId || userAny.upiId || "",
+              phoneNumber: prev.phoneNumber || userAny.phoneNumber || "",
+            }));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const canSubmit = useMemo(() => {
     return (
       form.title.trim().length > 0 &&
       form.author.trim().length > 0 &&
       form.pickupLabel.trim().length > 0 &&
-      form.pickupAddressLine.trim().length > 0
+      form.pickupAddressLine.trim().length > 0 &&
+      form.upiId.trim().length > 0 &&
+      form.phoneNumber.trim().length > 0
     );
   }, [form]);
 
@@ -60,6 +83,21 @@ export default function ListingForm() {
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!canSubmit) return;
+
+    const trimmedUpi = form.upiId.trim();
+    const trimmedPhone = form.phoneNumber.trim();
+
+    if (!trimmedUpi.includes("@")) {
+      setError("Please enter a valid UPI ID (e.g. username@bank).");
+      return;
+    }
+
+    const cleanPhone = trimmedPhone.replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
+      setError("Please enter a valid 10-digit phone number.");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     try {
@@ -73,13 +111,15 @@ export default function ListingForm() {
         pickupLabel: form.pickupLabel.trim(),
         pickupAddressLine: form.pickupAddressLine.trim(),
         pickupCity: "Kanpur",
+        upiId: trimmedUpi,
+        phoneNumber: trimmedPhone,
         bookPrice: 0,
         rentalPricePerWeek: 50,
         securityDeposit: 0,
       });
       router.push(`/browse/${listing.id}?listed=1`);
-    } catch {
-      setError("Couldn't save that listing — check the details and try again.");
+    } catch (err: any) {
+      setError(err?.message || "Couldn't save that listing — check the details and try again.");
       setSubmitting(false);
     }
   }
@@ -159,6 +199,38 @@ export default function ListingForm() {
             ))}
           </div>
         </Field>
+      </DashedCard>
+
+      <DashedCard className="space-y-4">
+        <p style={{ fontFamily: FONT_MONO, color: INK }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
+          Mandatory Lister Payout Details
+        </p>
+        <p className="text-sm text-[#20304D]/70">
+          Please specify your UPI ID and Phone Number. Readoodle admin will use these details to transfer your rental earnings (₹49/rental) directly to your account.
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="UPI ID (Mandatory)">
+            <input
+              value={form.upiId}
+              onChange={(e) => update("upiId", e.target.value)}
+              placeholder="e.g. username@upi or mobile@okaxis"
+              className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
+              required
+            />
+          </Field>
+
+          <Field label="Phone Number (Mandatory)">
+            <input
+              type="tel"
+              value={form.phoneNumber}
+              onChange={(e) => update("phoneNumber", e.target.value)}
+              placeholder="e.g. 9876543210"
+              className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
+              required
+            />
+          </Field>
+        </div>
       </DashedCard>
 
       <DashedCard className="space-y-2">

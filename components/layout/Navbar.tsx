@@ -10,8 +10,8 @@ import { isAdminEmail } from "@/lib/admin-utils";
 
 const LINKS = [
   { href: "/browse", label: "Browse books" },
-  { href: "/#how", label: "How it works" },
-  { href: "/lister", label: "Become a lister" },
+  { href: "/lister", label: "Lister Dashboard" },
+  { href: "/account/rentals", label: "My Rentals" },
   { href: "/admin", label: "Admin Panel", adminOnly: true },
 ];
 

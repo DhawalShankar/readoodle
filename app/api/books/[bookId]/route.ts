@@ -43,3 +43,38 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
   return NextResponse.json({ deleted: true });
 }
+
+export async function PATCH(request: Request, { params }: { params: Promise<{ bookId: string }> }) {
+  const { bookId } = await params;
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ detail: "Login zaroori hai" }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const userId = (session.user as any).id;
+  const collection = await getBooksCollection();
+
+  const updateFields: Record<string, any> = {};
+  if (typeof body.available === "boolean") updateFields.available = body.available;
+  if (typeof body.availability === "string") updateFields.available = body.availability === "available";
+  if (body.title) updateFields.title = body.title;
+  if (body.author) updateFields.author = body.author;
+  if (body.description) updateFields.description = body.description;
+  if (body.genre) updateFields.genre = body.genre;
+  if (body.condition) updateFields.condition = body.condition;
+  if (body.upiId) updateFields["lister.upiId"] = body.upiId;
+  if (body.phoneNumber) updateFields["lister.phoneNumber"] = body.phoneNumber;
+
+  const result = await collection.findOneAndUpdate(
+    { id: bookId, "lister.id": userId },
+    { $set: updateFields },
+    { returnDocument: "after", projection: { _id: 0 } }
+  );
+
+  if (!result) {
+    return NextResponse.json({ detail: "This is not your listing or it doesn't exist" }, { status: 403 });
+  }
+
+  return NextResponse.json(result);
+}

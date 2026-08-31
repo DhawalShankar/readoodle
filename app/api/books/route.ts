@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getBooksCollection } from "@/lib/mongodb";
+import { getBooksCollection, getUsersCollection } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import type { Book, NewListingPayload } from "@/types";
 import { FIXED_RENTAL_PRICE_PER_WEEK, FIXED_SECURITY_DEPOSIT } from "@/lib/constants";
 
@@ -41,16 +42,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(books);
 }
 
-/** POST /api/books/ — powers ListingForm's createListing(). Mirrors the
- *  same PRD §7 pricing caps that were enforced in the old FastAPI backend:
- *  rental ≤ 50% of book price, deposit ≤ 100% of book price. This check
- *  matters here specifically because it's server-side — the frontend's
- *  own check is just a convenience, not something to rely on alone.
- *
- *  Also now requires login — the listing's lister.id is taken from the
- *  session, not the client, so a book always belongs to whoever is
- *  actually signed in (this is what makes "only I can delete/see my
- *  listing" enforceable later). */
+/** POST /api/books/ — powers ListingForm's createListing(). */
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
@@ -59,10 +51,33 @@ export async function POST(request: NextRequest) {
 
   const payload = (await request.json()) as NewListingPayload;
 
+  const upiId = payload.upiId?.trim();
+  const phoneNumber = payload.phoneNumber?.trim();
+
+  if (!upiId || !phoneNumber) {
+    return NextResponse.json(
+      { detail: "UPI ID and Phone Number are mandatory for listing a book." },
+      { status: 400 }
+    );
+  }
+
+  if (!upiId.includes("@")) {
+    return NextResponse.json(
+      { detail: "Please provide a valid UPI ID (e.g. username@bank)." },
+      { status: 400 }
+    );
+  }
+
+  const cleanPhone = phoneNumber.replace(/\D/g, "");
+  if (cleanPhone.length < 10) {
+    return NextResponse.json(
+      { detail: "Please provide a valid 10-digit phone number." },
+      { status: 400 }
+    );
+  }
+
   const legacyBookPrice = Number(payload.bookPrice ?? 0);
 
-  // Readoodle uses a fixed price model: ₹50/week rental, ₹500 security deposit.
-  // Older validations tied to the book's purchase value are no longer relevant.
   if (legacyBookPrice > 0) {
     const maxRental = legacyBookPrice * 0.5;
     if ((payload.rentalPricePerWeek ?? FIXED_RENTAL_PRICE_PER_WEEK) > maxRental) {
@@ -79,6 +94,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const userId = (session.user as any).id;
+
   const book: Book = {
     id: randomUUID(),
     title: payload.title,
@@ -92,9 +109,11 @@ export async function POST(request: NextRequest) {
     securityDeposit: FIXED_SECURITY_DEPOSIT,
     available: true,
     lister: {
-      id: (session.user as any).id, // real logged-in user id, no more "local-owner"
+      id: userId,
       name: session.user.name ?? "You",
       source: "lister",
+      upiId,
+      phoneNumber,
       pickupPoint: {
         id: randomUUID(),
         label: payload.pickupLabel,
@@ -112,6 +131,22 @@ export async function POST(request: NextRequest) {
 
   const collection = await getBooksCollection();
   await collection.insertOne(book);
+
+  // Update user profile with payout details for future reuse & admin reports
+  try {
+    const usersCollection = await getUsersCollection();
+    let filter: any;
+    try {
+      filter = { _id: new ObjectId(userId) };
+    } catch {
+      filter = { _id: userId };
+    }
+    await usersCollection.updateOne(filter, {
+      $set: { upiId, phoneNumber },
+    });
+  } catch (e) {
+    console.error("Failed to update user payout profile:", e);
+  }
 
   return NextResponse.json(book, { status: 201 });
 }

@@ -15,6 +15,6 @@ export async function GET() {
 
   return NextResponse.json({
     securityDepositPaid: Boolean(user?.securityDepositPaid),
-    user: user ? { name: user.name, email: user.email } : undefined,
+    user: user ? { name: user.name, email: user.email, upiId: user.upiId || "", phoneNumber: user.phoneNumber || "" } : undefined,
   });
 }

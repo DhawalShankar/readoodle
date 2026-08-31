@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRentalsCollection, getUsersCollection, getBooksCollection } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 import { requireAdminSession } from "@/lib/admin";
 import { ADMIN_EMAIL } from "@/lib/admin-utils";
 
@@ -27,34 +28,37 @@ export async function GET() {
             if (bookData && bookData.lister) {
                 const listerId = bookData.lister.id;
 
-                if (!listerEarnings[listerId]) {
-                    // Fetch lister user info
-                    const listerUser = await usersCollection.findOne({ _id: { $eq: listerId } as any });
+                let listerUser = null;
+                try {
+                    listerUser = await usersCollection.findOne({ _id: new ObjectId(listerId) });
+                } catch {
+                    listerUser = await usersCollection.findOne({ _id: listerId as any });
+                }
 
-                    // Skip admin user - don't show their payouts
-                    if (listerUser?.email === ADMIN_EMAIL) {
-                        continue;
-                    }
+                // Skip admin user - don't show their payouts
+                if (listerUser?.email === ADMIN_EMAIL) {
+                    continue;
+                }
+
+                if (!listerEarnings[listerId]) {
+                    const upiId = bookData.lister?.upiId || listerUser?.upiId || "N/A";
+                    const phoneNumber = bookData.lister?.phoneNumber || listerUser?.phoneNumber || "N/A";
 
                     listerEarnings[listerId] = {
                         id: listerId,
-                        name: bookData.lister.name || "Unknown",
+                        name: bookData.lister.name || listerUser?.name || "Unknown",
                         email: listerUser?.email || "N/A",
+                        upiId,
+                        phoneNumber,
                         pickupPoint: bookData.lister.pickupPoint,
                         totalRentals: 0,
                         totalEarnings: 0, // Before commission
                         platformCommission: 0, // 2% commission
                         netEarnings: 0, // After commission
-                        payoutReleased: false,
-                        lastPayoutDate: null,
+                        payoutReleased: Boolean(listerUser?.payoutReleased),
+                        lastPayoutDate: listerUser?.lastPayoutDate ? new Date(listerUser.lastPayoutDate).toISOString() : null,
                         rentals: [],
                     };
-                }
-
-                // Skip admin rentals
-                const listerUser = await usersCollection.findOne({ _id: { $eq: listerId } as any });
-                if (listerUser?.email === ADMIN_EMAIL) {
-                    continue;
                 }
 
                 const rentalAmount = rental.amount || 50;
@@ -84,6 +88,38 @@ export async function GET() {
     } catch (error: any) {
         return NextResponse.json(
             { detail: error.message || "Failed to fetch listers" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PATCH(request: Request) {
+    try {
+        const { errorResponse } = await requireAdminSession();
+        if (errorResponse) return errorResponse;
+
+        const { listerId, payoutReleased } = await request.json();
+        if (!listerId || typeof payoutReleased !== "boolean") {
+            return NextResponse.json({ detail: "listerId and boolean payoutReleased required" }, { status: 400 });
+        }
+
+        const usersCollection = await getUsersCollection();
+        let filter: any;
+        try {
+            filter = { _id: new ObjectId(listerId) };
+        } catch {
+            filter = { _id: listerId };
+        }
+
+        const lastPayoutDate = payoutReleased ? new Date() : null;
+        await usersCollection.updateOne(filter, {
+            $set: { payoutReleased, lastPayoutDate },
+        });
+
+        return NextResponse.json({ success: true, listerId, payoutReleased, lastPayoutDate });
+    } catch (error: any) {
+        return NextResponse.json(
+            { detail: error.message || "Failed to update lister payout status" },
             { status: 500 }
         );
     }

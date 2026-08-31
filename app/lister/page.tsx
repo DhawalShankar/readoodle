@@ -2,29 +2,59 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import type { Book } from "@/types";
-import { FONT_DISPLAY, FONT_MONO, INK, PAPER, SAGE } from "@/lib/theme";
-import { fetchMyListings, deleteListing } from "@/lib/api";
+import type { Book, ListerStats } from "@/types";
+import { FONT_DISPLAY, FONT_MONO, INK, PAPER, SAGE, CORAL } from "@/lib/theme";
+import { fetchMyListings, deleteListing, fetchListerStats, setBookAvailability } from "@/lib/api";
 import ListingForm from "@/components/lister/ListingForm";
 import Badge from "@/components/ui/Badge";
+import DashedCard from "@/components/ui/DashedCard";
 
 export default function ListerPage() {
   const [listings, setListings] = useState<Book[]>([]);
+  const [stats, setStats] = useState<ListerStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const loadData = () => {
+    setLoading(true);
+    Promise.all([fetchMyListings(), fetchListerStats()])
+      .then(([booksData, statsData]) => {
+        setListings(booksData);
+        setStats(statsData);
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    fetchMyListings()
-      .then((data) => !cancelled && setListings(data))
-      .finally(() => !cancelled && setLoading(false));
-    return () => {
-      cancelled = true;
-    };
+    loadData();
   }, []);
 
+  async function handleToggleAvailability(e: React.MouseEvent, book: Book) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const newAvailability = book.available ? "rented" : "available";
+    setTogglingId(book.id);
+    try {
+      await setBookAvailability(book.id, newAvailability);
+      setListings((prev) =>
+        prev.map((b) => (b.id === book.id ? { ...b, available: !book.available } : b))
+      );
+    } catch {
+      alert("Failed to update status — please try again.");
+    } finally {
+      setTogglingId(null);
+    }
+  }
+
   async function handleDelete(e: React.MouseEvent, bookId: string) {
-    e.preventDefault(); // Link navigate na kare
+    e.preventDefault();
     e.stopPropagation();
 
     if (!confirm("Delete this listing? This action cannot be undone.")) return;
@@ -44,47 +74,80 @@ export default function ListerPage() {
     <div style={{ backgroundColor: PAPER }} className="min-h-screen">
       <div className="mx-auto max-w-3xl px-6 py-12">
         <h1 style={{ fontFamily: FONT_DISPLAY }} className="text-5xl font-bold">
-          List a book
+          My Lister Dashboard
         </h1>
         <p className="mt-2 max-w-xl text-[#20304D]/70">
-          Every rental is ₹50 for 7 days, keep 98% of it. Set your pickup point and your book goes live on the
-          Kanpur shelf as soon as you save it below.
+          Manage your own listed books, toggle availability, and track your personal rental earnings (₹49/rental).
         </p>
 
+        {/* Lister Earnings & Payout Summary Card */}
+        {stats && (
+          <div className="mt-8">
+            <DashedCard className="space-y-4">
+              <div className="flex items-center justify-between border-b border-[#20304D]/10 pb-3">
+                <div>
+                  <p style={{ fontFamily: FONT_MONO, color: INK }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
+                    My Personal Earnings & Payout Status
+                  </p>
+                  <h2 className="text-xl font-bold mt-1" style={{ color: INK }}>
+                    Total Earnings: ₹{stats.netEarnings.toFixed(2)}
+                  </h2>
+                </div>
+                <div>
+                  {stats.payoutReleased ? (
+                    <span className="rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: SAGE }}>
+                      ✓ PAID
+                    </span>
+                  ) : (
+                    <span className="rounded-full px-3 py-1 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                      ⌛ PENDING T+2 PAYOUT
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3 text-center text-xs">
+                <div className="bg-[#F4F1EA] p-3 rounded">
+                  <p style={{ fontFamily: FONT_MONO }} className="font-bold text-base">{stats.totalListings}</p>
+                  <p className="text-[#20304D]/60">My Listed Books</p>
+                </div>
+                <div className="bg-[#F4F1EA] p-3 rounded">
+                  <p style={{ fontFamily: FONT_MONO }} className="font-bold text-base">{stats.totalRentals}</p>
+                  <p className="text-[#20304D]/60">Approved Rentals</p>
+                </div>
+                <div className="bg-[#F4F1EA] p-3 rounded">
+                  <p style={{ fontFamily: FONT_MONO, color: SAGE }} className="font-bold text-base">
+                    ₹{stats.netEarnings.toFixed(2)}
+                  </p>
+                  <p className="text-[#20304D]/60">Net Earnings (98%)</p>
+                </div>
+              </div>
+
+              <div className="p-3 bg-[#F4F1EA] rounded text-xs space-y-1">
+                <p><strong>💳 Registered UPI ID:</strong> {stats.upiId || "Not specified"}</p>
+                <p><strong>📱 Registered Phone:</strong> {stats.phoneNumber || "Not specified"}</p>
+                {stats.lastPayoutDate && (
+                  <p className="text-[#20304D]/70">✓ Last payout released on {new Date(stats.lastPayoutDate).toLocaleDateString()}</p>
+                )}
+              </div>
+            </DashedCard>
+          </div>
+        )}
+
         {/* How Payouts Work Section */}
-        <div className="mt-10 p-6 border-2 border-dashed" style={{ borderColor: SAGE, backgroundColor: "#F5F9F6" }}>
+        <div className="mt-8 p-6 border-2 border-dashed" style={{ borderColor: SAGE, backgroundColor: "#F5F9F6" }}>
           <h2 style={{ fontFamily: FONT_DISPLAY, color: SAGE }} className="text-2xl font-bold mb-4">
             How Payouts Work
           </h2>
           <div className="space-y-3 text-sm text-[#20304D]/80">
             <div>
               <p className="font-semibold">💰 Fixed Price: ₹50 per book, per 7 days</p>
-              <p className="text-xs text-[#20304D]/70 mt-1">No negotiation. Every renter pays ₹50. You keep 98%.</p>
-            </div>
-            <div>
-              <p className="font-semibold">📊 Commission Breakdown</p>
-              <p className="text-xs text-[#20304D]/70 mt-1">
-                • Renter pays: ₹50<br />
-                • Readoodle commission (2%): ₹1<br />
-                • You receive: ₹49 per rental
-              </p>
+              <p className="text-xs text-[#20304D]/70 mt-1">No negotiation. Every renter pays ₹50. You keep 98% (₹49 net).</p>
             </div>
             <div>
               <p className="font-semibold">⏰ T+2 Payout Timing</p>
               <p className="text-xs text-[#20304D]/70 mt-1">
-                Once a rental is approved and book is picked up, the admin will manually verify and send you payment within 2 days via UPI/bank transfer. You'll see pending & paid status in the admin "Lister Payouts" section.
-              </p>
-            </div>
-            <div>
-              <p className="font-semibold">✓ How to Track Your Earnings</p>
-              <p className="text-xs text-[#20304D]/70 mt-1">
-                Visit <Link href="/account/rentals" className="text-blue-600 underline">your rentals page</Link> to see your active listings and rental history. Admin will notify you via email when payments are processed.
-              </p>
-            </div>
-            <div>
-              <p className="font-semibold">❓ Questions?</p>
-              <p className="text-xs text-[#20304D]/70 mt-1">
-                Contact the admin at your lister email. We process payouts every 2 days for all approved rentals.
+                Admin verifies rental approvals and transfers your earnings directly to your UPI ID within 48 hours.
               </p>
             </div>
           </div>
@@ -94,36 +157,59 @@ export default function ListerPage() {
           <ListingForm />
         </div>
 
+        {/* My Personal Catalog & Availability Controls */}
         <div className="mt-16">
-          <p style={{ fontFamily: FONT_MONO }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
-            Your listings
-          </p>
+          <div className="flex items-center justify-between">
+            <p style={{ fontFamily: FONT_MONO }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
+              My Books Catalog ({listings.length})
+            </p>
+            <span className="text-xs text-[#20304D]/60">Only showing books listed by you</span>
+          </div>
 
           {loading && (
             <p style={{ fontFamily: FONT_MONO }} className="mt-4 text-sm text-[#20304D]/50">
-              Loading…
+              Loading your catalog…
             </p>
           )}
 
           {!loading && listings.length === 0 && (
             <div className="mt-4 border-2 border-dashed border-[#20304D]/30 p-8 text-center text-sm text-[#20304D]/60">
-              Nothing listed yet — the form above is where that starts.
+              You haven't listed any books yet — use the form above to add your first book.
             </div>
           )}
 
           <div className="mt-4 space-y-3">
             {listings.map((book) => (
-              <Link
+              <div
                 key={book.id}
-                href={`/browse/${book.id}`}
-                className="flex items-center justify-between gap-4 border border-[#20304D]/15 bg-[#FBF7EC] p-4 hover:-translate-y-0.5 transition-transform"
+                className="flex items-center justify-between gap-4 border border-[#20304D]/15 bg-[#FBF7EC] p-4"
               >
                 <div>
-                  <p className="text-sm font-semibold" style={{ color: INK }}>{book.title}</p>
-                  <p className="text-xs text-[#20304D]/60">{book.author}</p>
+                  <Link href={`/browse/${book.id}`} className="text-sm font-semibold hover:underline" style={{ color: INK }}>
+                    {book.title}
+                  </Link>
+                  <p className="text-xs text-[#20304D]/60">{book.author} · {book.genre}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge color={book.available ? SAGE : INK}>{book.available ? "Live" : "Rented out"}</Badge>
+                  <Badge color={book.available ? SAGE : INK}>{book.available ? "Available" : "Rented out"}</Badge>
+
+                  <button
+                    onClick={(e) => handleToggleAvailability(e, book)}
+                    disabled={togglingId === book.id}
+                    className="rounded border px-2.5 py-1 text-xs font-semibold transition-opacity disabled:opacity-50"
+                    style={{
+                      borderColor: INK,
+                      backgroundColor: book.available ? "transparent" : INK,
+                      color: book.available ? INK : PAPER,
+                    }}
+                  >
+                    {togglingId === book.id
+                      ? "Updating..."
+                      : book.available
+                        ? "Mark Rented"
+                        : "Mark Available"}
+                  </button>
+
                   <button
                     onClick={(e) => handleDelete(e, book.id)}
                     disabled={deletingId === book.id}
@@ -132,7 +218,7 @@ export default function ListerPage() {
                     {deletingId === book.id ? "Deleting…" : "Delete"}
                   </button>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

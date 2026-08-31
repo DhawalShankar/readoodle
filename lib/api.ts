@@ -1,4 +1,4 @@
-import type { Book, BookFilterState, Rental, AdminUser, AdminRentalRequest } from "@/types";
+import type { Book, BookFilterState, Rental, AdminUser, AdminRentalRequest, AdminLister } from "@/types";
 import type { NewListingPayload } from "@/types";
 
 const API_BASE =
@@ -132,5 +132,16 @@ export function updateAdminBookAvailability(bookId: string, available: boolean) 
 }
 
 export function fetchAdminListers() {
-  return request<any[]>(`/admin/listers`);
+  return request<AdminLister[]>(`/admin/listers`);
+}
+
+export function updateAdminListerPayout(listerId: string, payoutReleased: boolean) {
+  return request<{ success: boolean; listerId: string; payoutReleased: boolean; lastPayoutDate: string | null }>(`/admin/listers`, {
+    method: "PATCH",
+    body: JSON.stringify({ listerId, payoutReleased }),
+  });
+}
+
+export function fetchListerStats() {
+  return request<import("@/types").ListerStats>(`/lister/stats`);
 }
