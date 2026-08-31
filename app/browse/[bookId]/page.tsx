@@ -79,7 +79,7 @@ export default async function BookDetailPage({
 
             <DashedCard>
             <p style={{ fontFamily: FONT_MONO }} className="text-xs uppercase tracking-widest text-[#20304D]/55">
-              Pickup poinfitt
+              Pickup point
             </p>
             <p className="mt-1 font-medium">{book.lister.pickupPoint.label}</p>
             <p className="mt-1 text-xs text-[#20304D]/55">{book.lister.pickupPoint.addressLine}</p>
