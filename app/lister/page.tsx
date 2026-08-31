@@ -2,19 +2,24 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import type { Book, ListerStats } from "@/types";
 import { FONT_DISPLAY, FONT_MONO, INK, PAPER, SAGE, CORAL } from "@/lib/theme";
 import { fetchMyListings, deleteListing, fetchListerStats, setBookAvailability } from "@/lib/api";
+import { isAdminEmail } from "@/lib/admin-utils";
 import ListingForm from "@/components/lister/ListingForm";
 import Badge from "@/components/ui/Badge";
 import DashedCard from "@/components/ui/DashedCard";
 
 export default function ListerPage() {
+  const { data: session } = useSession();
   const [listings, setListings] = useState<Book[]>([]);
   const [stats, setStats] = useState<ListerStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const isOwner = Boolean(stats?.isAdmin || isAdminEmail(session?.user?.email));
 
   const loadData = () => {
     setLoading(true);
@@ -77,7 +82,9 @@ export default function ListerPage() {
           My Lister Dashboard
         </h1>
         <p className="mt-2 max-w-xl text-[#20304D]/70">
-          Manage your own listed books, toggle availability, and track your personal rental earnings (₹49/rental).
+          {isOwner
+            ? "Manage your official inventory books, toggle availability, and track total rental revenue."
+            : "Manage your own listed books, toggle availability, and track your personal rental earnings (₹49/rental)."}
         </p>
 
         {/* Lister Earnings & Payout Summary Card */}
@@ -87,14 +94,18 @@ export default function ListerPage() {
               <div className="flex items-center justify-between border-b border-[#20304D]/10 pb-3">
                 <div>
                   <p style={{ fontFamily: FONT_MONO, color: INK }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
-                    My Personal Earnings & Payout Status
+                    {isOwner ? "Readoodle Official Inventory & Revenue" : "My Personal Earnings & Payout Status"}
                   </p>
                   <h2 className="text-xl font-bold mt-1" style={{ color: INK }}>
-                    Total Earnings: ₹{stats.netEarnings.toFixed(2)}
+                    {isOwner ? `Total Revenue: ₹${stats.grossEarnings.toFixed(2)}` : `Total Earnings: ₹${stats.netEarnings.toFixed(2)}`}
                   </h2>
                 </div>
                 <div>
-                  {stats.payoutReleased ? (
+                  {isOwner ? (
+                    <span className="rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: SAGE }}>
+                      ✓ OWN INVENTORY
+                    </span>
+                  ) : stats.payoutReleased ? (
                     <span className="rounded-full px-3 py-1 text-xs font-bold text-white" style={{ backgroundColor: SAGE }}>
                       ✓ PAID
                     </span>
@@ -117,17 +128,25 @@ export default function ListerPage() {
                 </div>
                 <div className="bg-[#F4F1EA] p-3 rounded">
                   <p style={{ fontFamily: FONT_MONO, color: SAGE }} className="font-bold text-base">
-                    ₹{stats.netEarnings.toFixed(2)}
+                    ₹{isOwner ? stats.grossEarnings.toFixed(2) : stats.netEarnings.toFixed(2)}
                   </p>
-                  <p className="text-[#20304D]/60">Net Earnings (98%)</p>
+                  <p className="text-[#20304D]/60">{isOwner ? "Direct Revenue (100%)" : "Net Earnings (98%)"}</p>
                 </div>
               </div>
 
               <div className="p-3 bg-[#F4F1EA] rounded text-xs space-y-1">
-                <p><strong>💳 Registered UPI ID:</strong> {stats.upiId || "Not specified"}</p>
-                <p><strong>📱 Registered Phone:</strong> {stats.phoneNumber || "Not specified"}</p>
-                {stats.lastPayoutDate && (
-                  <p className="text-[#20304D]/70">✓ Last payout released on {new Date(stats.lastPayoutDate).toLocaleDateString()}</p>
+                {isOwner ? (
+                  <p className="text-[#20304D]/80">
+                    <strong>👑 Platform Owner Account:</strong> Payout holds do not apply to your listings (dhawalmannu@gmail.com).
+                  </p>
+                ) : (
+                  <>
+                    <p><strong>💳 Registered UPI ID:</strong> {stats.upiId || "Not specified"}</p>
+                    <p><strong>📱 Registered Phone:</strong> {stats.phoneNumber || "Not specified"}</p>
+                    {stats.lastPayoutDate && (
+                      <p className="text-[#20304D]/70">✓ Last payout released on {new Date(stats.lastPayoutDate).toLocaleDateString()}</p>
+                    )}
+                  </>
                 )}
               </div>
             </DashedCard>
@@ -137,17 +156,25 @@ export default function ListerPage() {
         {/* How Payouts Work Section */}
         <div className="mt-8 p-6 border-2 border-dashed" style={{ borderColor: SAGE, backgroundColor: "#F5F9F6" }}>
           <h2 style={{ fontFamily: FONT_DISPLAY, color: SAGE }} className="text-2xl font-bold mb-4">
-            How Payouts Work
+            {isOwner ? "Official Inventory Policy" : "How Payouts Work"}
           </h2>
           <div className="space-y-3 text-sm text-[#20304D]/80">
             <div>
               <p className="font-semibold">💰 Fixed Price: ₹50 per book, per 7 days</p>
-              <p className="text-xs text-[#20304D]/70 mt-1">No negotiation. Every renter pays ₹50. You keep 98% (₹49 net).</p>
+              <p className="text-xs text-[#20304D]/70 mt-1">
+                {isOwner
+                  ? "Every renter pays ₹50 per 7 days."
+                  : "No negotiation. Every renter pays ₹50. You keep 98% (₹49 net)."}
+              </p>
             </div>
             <div>
-              <p className="font-semibold">⏰ T+2 Payout Timing</p>
+              <p className="font-semibold">
+                {isOwner ? "⚡ Direct Revenue (No Payout Holds)" : "⏰ T+2 Payout Timing"}
+              </p>
               <p className="text-xs text-[#20304D]/70 mt-1">
-                Admin verifies rental approvals and transfers your earnings directly to your UPI ID within 48 hours.
+                {isOwner
+                  ? "As the platform owner (dhawalmannu@gmail.com), 100% of rental revenue directly belongs to Readoodle with no payout processing required."
+                  : "Admin verifies rental approvals and transfers your earnings directly to your UPI ID within 48 hours."}
               </p>
             </div>
           </div>

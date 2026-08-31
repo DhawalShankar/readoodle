@@ -2,8 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { CORAL, FONT_MONO, INK } from "@/lib/theme";
 import { createListing, fetchProfile } from "@/lib/api";
+import { isAdminEmail } from "@/lib/admin-utils";
 import Button from "@/components/ui/Button";
 import DashedCard from "@/components/ui/DashedCard";
 
@@ -44,6 +46,9 @@ const EMPTY: FormState = {
 
 export default function ListingForm() {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isOwner = isAdminEmail(session?.user?.email);
+
   const [form, setForm] = useState<FormState>(EMPTY);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,17 +58,23 @@ export default function ListingForm() {
       .then((data) => {
         if (data?.user) {
           const userAny = data.user as any;
-          if (userAny.upiId || userAny.phoneNumber) {
-            setForm((prev) => ({
-              ...prev,
-              upiId: prev.upiId || userAny.upiId || "",
-              phoneNumber: prev.phoneNumber || userAny.phoneNumber || "",
-            }));
-          }
+          setForm((prev) => ({
+            ...prev,
+            upiId: prev.upiId || userAny.upiId || (isOwner ? "dhawalmannu@upi" : ""),
+            phoneNumber: prev.phoneNumber || userAny.phoneNumber || (isOwner ? "9876543210" : ""),
+          }));
         }
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        if (isOwner) {
+          setForm((prev) => ({
+            ...prev,
+            upiId: prev.upiId || "dhawalmannu@upi",
+            phoneNumber: prev.phoneNumber || "9876543210",
+          }));
+        }
+      });
+  }, [isOwner]);
 
   const canSubmit = useMemo(() => {
     return (
@@ -71,10 +82,9 @@ export default function ListingForm() {
       form.author.trim().length > 0 &&
       form.pickupLabel.trim().length > 0 &&
       form.pickupAddressLine.trim().length > 0 &&
-      form.upiId.trim().length > 0 &&
-      form.phoneNumber.trim().length > 0
+      (isOwner || (form.upiId.trim().length > 0 && form.phoneNumber.trim().length > 0))
     );
-  }, [form]);
+  }, [form, isOwner]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -84,16 +94,21 @@ export default function ListingForm() {
     e.preventDefault();
     if (!canSubmit) return;
 
-    const trimmedUpi = form.upiId.trim();
-    const trimmedPhone = form.phoneNumber.trim();
+    let trimmedUpi = form.upiId.trim();
+    let trimmedPhone = form.phoneNumber.trim();
 
-    if (!trimmedUpi.includes("@")) {
+    if (isOwner) {
+      if (!trimmedUpi) trimmedUpi = "dhawalmannu@upi";
+      if (!trimmedPhone) trimmedPhone = "9876543210";
+    }
+
+    if (!isOwner && !trimmedUpi.includes("@")) {
       setError("Please enter a valid UPI ID (e.g. username@bank).");
       return;
     }
 
     const cleanPhone = trimmedPhone.replace(/\D/g, "");
-    if (cleanPhone.length < 10) {
+    if (!isOwner && cleanPhone.length < 10) {
       setError("Please enter a valid 10-digit phone number.");
       return;
     }
@@ -203,31 +218,33 @@ export default function ListingForm() {
 
       <DashedCard className="space-y-4">
         <p style={{ fontFamily: FONT_MONO, color: INK }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
-          Mandatory Lister Payout Details
+          {isOwner ? "Owner Contact Details" : "Mandatory Lister Payout Details"}
         </p>
         <p className="text-sm text-[#20304D]/70">
-          Please specify your UPI ID and Phone Number. Readoodle admin will use these details to transfer your rental earnings (₹49/rental) directly to your account.
+          {isOwner
+            ? "Contact details associated with Readoodle official inventory. Payout transfers do not apply to your owner account."
+            : "Please specify your UPI ID and Phone Number. Readoodle admin will use these details to transfer your rental earnings (₹49/rental) directly to your account."}
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="UPI ID (Mandatory)">
+          <Field label={isOwner ? "UPI ID (Owner Account)" : "UPI ID (Mandatory)"}>
             <input
               value={form.upiId}
               onChange={(e) => update("upiId", e.target.value)}
               placeholder="e.g. username@upi or mobile@okaxis"
               className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
-              required
+              required={!isOwner}
             />
           </Field>
 
-          <Field label="Phone Number (Mandatory)">
+          <Field label={isOwner ? "Phone Number (Owner Contact)" : "Phone Number (Mandatory)"}>
             <input
               type="tel"
               value={form.phoneNumber}
               onChange={(e) => update("phoneNumber", e.target.value)}
               placeholder="e.g. 9876543210"
               className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
-              required
+              required={!isOwner}
             />
           </Field>
         </div>
@@ -238,8 +255,9 @@ export default function ListingForm() {
           Pricing
         </p>
         <p className="text-sm text-[#20304D]/70">
-          Every rental is ₹50 for 7 days, plus ₹10/day if it comes back late. Readoodle takes a flat 2% commission;
-          the rest lands with you T+2 days after pickup is confirmed.
+          {isOwner
+            ? "Every rental is ₹50 for 7 days, plus ₹10/day if returned late. As the platform owner (dhawalmannu@gmail.com), 100% of rental revenue directly belongs to Readoodle."
+            : "Every rental is ₹50 for 7 days, plus ₹10/day if it comes back late. Readoodle takes a flat 2% commission; the rest lands with you T+2 days after pickup is confirmed."}
         </p>
       </DashedCard>
 

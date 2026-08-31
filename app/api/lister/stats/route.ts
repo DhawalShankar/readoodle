@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getBooksCollection, getRentalsCollection, getUsersCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { isAdminEmail } from "@/lib/admin-utils";
 
 export async function GET() {
   try {
@@ -12,6 +13,7 @@ export async function GET() {
     }
 
     const userId = (session.user as any).id;
+    const isAdmin = isAdminEmail(session.user.email);
     const usersCollection = await getUsersCollection();
     const booksCollection = await getBooksCollection();
     const rentalsCollection = await getRentalsCollection();
@@ -67,6 +69,7 @@ export async function GET() {
       lastPayoutDate: userDoc?.lastPayoutDate ? new Date(userDoc.lastPayoutDate).toISOString() : null,
       upiId: userDoc?.upiId || "",
       phoneNumber: userDoc?.phoneNumber || "",
+      isAdmin: Boolean(isAdmin),
       rentals: rentalsSummary,
     });
   } catch (error: any) {

@@ -152,6 +152,7 @@ export interface ListerStats {
   lastPayoutDate: string | null;
   upiId: string;
   phoneNumber: string;
+  isAdmin?: boolean;
   rentals: Array<{
     id: string;
     bookTitle: string;
