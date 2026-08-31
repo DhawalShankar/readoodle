@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getBooksCollection, getRentalsCollection, getUsersCollection } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
@@ -14,6 +15,15 @@ export async function POST(request: Request) {
   const userId = (session.user as any).id;
   const userEmail = session.user.email ?? "";
   const userName = session.user.name ?? "User";
+
+  const ip = getClientIp(request);
+  const { allowed } = rateLimit(`rental:${userId || ip}`, { limit: 10, windowMs: 15 * 60 * 1000 }); // 10 requests / 15 min per user
+  if (!allowed) {
+    return NextResponse.json(
+      { detail: "Too many rental requests. Please slow down and try again shortly." },
+      { status: 429 }
+    );
+  }
 
   const { bookId, weeks = 1 } = await request.json();
 
