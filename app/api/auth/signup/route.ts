@@ -7,13 +7,13 @@ export async function POST(request: Request) {
   const { name, email, password } = await request.json();
 
   if (!name || !email || !password) {
-    return NextResponse.json({ detail: "Sab fields required hain" }, { status: 400 });
+    return NextResponse.json({ detail: "All fields are required" }, { status: 400 });
   }
 
   const users = await getUsersCollection();
   const existing = await users.findOne({ email });
   if (existing) {
-    return NextResponse.json({ detail: "Ye email already registered hai" }, { status: 400 });
+    return NextResponse.json({ detail: "This email is already registered" }, { status: 400 });
   }
 
   const totalUsers = await users.countDocuments();

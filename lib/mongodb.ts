@@ -1,3 +1,5 @@
+"use server";
+
 import { MongoClient, Db } from "mongodb";
 
 /**
@@ -47,11 +49,17 @@ export async function getBooksCollection() {
 }
 
 export async function getUsersCollection() {
-  const client = await getDb(); // jo bhi tumhara existing connection function hai
-  return client.collection("users");
+  const db = await getDb();
+  return db.collection("users");
 }
 
 export async function getRentalsCollection() {
-  const client = await getDb(); // wahi function jo getUsersCollection/getBooksCollection use karte hain
-  return client.collection("rentals");
+  const db = await getDb();
+  return db.collection("rentals");
+}
+
+
+export async function getUnmatchedPaymentsCollection() {
+  const db = await getDb();
+  return db.collection("unmatched_payments");
 }

@@ -35,11 +35,11 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const collection = await getBooksCollection();
   const result = await collection.deleteOne({
     id: bookId,
-    "lister.id": (session.user as any).id, // yehi line "koi aur delete na kar paye" ko enforce karti hai
+    "lister.id": (session.user as any).id, // This line ensures only the lister can delete their own listing
   });
 
   if (result.deletedCount === 0) {
-    return NextResponse.json({ detail: "Ye tumhari listing nahi hai ya exist nahi karti" }, { status: 403 });
+    return NextResponse.json({ detail: "This is not your listing or it doesn't exist" }, { status: 403 });
   }
   return NextResponse.json({ deleted: true });
 }

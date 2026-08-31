@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { CORAL, FONT_MONO, INK } from "@/lib/theme";
-import { formatRupees } from "@/lib/utils";
 import { createListing } from "@/lib/api";
 import Button from "@/components/ui/Button";
 import DashedCard from "@/components/ui/DashedCard";
@@ -24,9 +23,6 @@ type FormState = {
   description: string;
   condition: (typeof CONDITIONS)[number]["value"];
   coverColor: string;
-  bookPrice: string; // kept as string while editing, parsed on submit
-  rentalPricePerWeek: string;
-  securityDeposit: string;
   pickupLabel: string;
   pickupAddressLine: string;
 };
@@ -38,9 +34,6 @@ const EMPTY: FormState = {
   description: "",
   condition: "good",
   coverColor: COVER_COLORS[0],
-  bookPrice: "",
-  rentalPricePerWeek: "",
-  securityDeposit: "",
   pickupLabel: "",
   pickupAddressLine: "",
 };
@@ -48,41 +41,23 @@ const EMPTY: FormState = {
 export default function ListingForm() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(EMPTY);
-  const [touchedPricing, setTouchedPricing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const bookPrice = Number(form.bookPrice) || 0;
-  const maxRental = bookPrice * 0.5;
-  const maxDeposit = bookPrice;
-
-  // Auto-fill sensible defaults once a book price is entered, until the
-  // person edits rental/deposit themselves.
-  const rentalPricePerWeek = touchedPricing ? Number(form.rentalPricePerWeek) || 0 : maxRental;
-  const securityDeposit = touchedPricing ? Number(form.securityDeposit) || 0 : maxDeposit;
-
-  const rentalOverCap = bookPrice > 0 && rentalPricePerWeek > maxRental;
-  const depositOverCap = bookPrice > 0 && securityDeposit > maxDeposit;
 
   const canSubmit = useMemo(() => {
     return (
       form.title.trim().length > 0 &&
       form.author.trim().length > 0 &&
-      bookPrice > 0 &&
-      rentalPricePerWeek > 0 &&
-      securityDeposit >= 0 &&
-      !rentalOverCap &&
-      !depositOverCap &&
       form.pickupLabel.trim().length > 0 &&
       form.pickupAddressLine.trim().length > 0
     );
-  }, [form, bookPrice, rentalPricePerWeek, securityDeposit, rentalOverCap, depositOverCap]);
+  }, [form]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     if (!canSubmit) return;
     setSubmitting(true);
@@ -95,12 +70,12 @@ export default function ListingForm() {
         description: form.description.trim(),
         condition: form.condition,
         coverColor: form.coverColor,
-        bookPrice,
-        rentalPricePerWeek,
-        securityDeposit,
         pickupLabel: form.pickupLabel.trim(),
         pickupAddressLine: form.pickupAddressLine.trim(),
         pickupCity: "Kanpur",
+        bookPrice: 0,
+        rentalPricePerWeek: 50,
+        securityDeposit: 0,
       });
       router.push(`/browse/${listing.id}?listed=1`);
     } catch {
@@ -186,59 +161,13 @@ export default function ListingForm() {
         </Field>
       </DashedCard>
 
-      <DashedCard className="space-y-4">
+      <DashedCard className="space-y-2">
         <p style={{ fontFamily: FONT_MONO, color: INK }} className="text-xs uppercase tracking-[0.2em] text-[#20304D]/60">
           Pricing
         </p>
-
-        <Field label="What's this book worth? (₹)">
-          <input
-            type="number"
-            min={0}
-            value={form.bookPrice}
-            onChange={(e) => update("bookPrice", e.target.value)}
-            placeholder="e.g. 300"
-            className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
-          />
-          <p className="mt-1 text-xs text-[#20304D]/55">
-            This sets your caps: rental can't exceed 50% of this per week, deposit can't exceed 100% of this.
-          </p>
-        </Field>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label={`Rental / week (max ${bookPrice > 0 ? formatRupees(maxRental) : "—"})`}>
-            <input
-              type="number"
-              min={0}
-              value={touchedPricing ? form.rentalPricePerWeek : maxRental || ""}
-              onChange={(e) => {
-                setTouchedPricing(true);
-                update("rentalPricePerWeek", e.target.value);
-              }}
-              className="w-full border bg-transparent px-3 py-2 text-sm outline-none"
-              style={{ borderColor: rentalOverCap ? CORAL : "#20304D40" }}
-            />
-            {rentalOverCap && <p className="mt-1 text-xs" style={{ color: CORAL }}>Over the 50% cap — lower this.</p>}
-          </Field>
-
-          <Field label={`Security deposit (max ${bookPrice > 0 ? formatRupees(maxDeposit) : "—"})`}>
-            <input
-              type="number"
-              min={0}
-              value={touchedPricing ? form.securityDeposit : maxDeposit || ""}
-              onChange={(e) => {
-                setTouchedPricing(true);
-                update("securityDeposit", e.target.value);
-              }}
-              className="w-full border bg-transparent px-3 py-2 text-sm outline-none"
-              style={{ borderColor: depositOverCap ? CORAL : "#20304D40" }}
-            />
-            {depositOverCap && <p className="mt-1 text-xs" style={{ color: CORAL }}>Over the book's price — lower this.</p>}
-          </Field>
-        </div>
-
-        <p className="text-xs text-[#20304D]/50">
-          Readoodle takes a flat 2% commission from your rental fee; the rest lands with you T+2 days after pickup is confirmed.
+        <p className="text-sm text-[#20304D]/70">
+          Every rental is ₹50 for 7 days, plus ₹10/day if it comes back late. Readoodle takes a flat 2% commission;
+          the rest lands with you T+2 days after pickup is confirmed.
         </p>
       </DashedCard>
 

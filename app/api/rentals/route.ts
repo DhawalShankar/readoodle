@@ -1,70 +1,94 @@
 import { NextResponse } from "next/server";
-import Razorpay from "razorpay";
 import { randomUUID } from "crypto";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getBooksCollection, getRentalsCollection, getUsersCollection } from "@/lib/mongodb";
-import { FIXED_RENTAL_PRICE_PER_WEEK, FIXED_SECURITY_DEPOSIT, DEFAULT_MAX_ACTIVE_RENTALS } from "@/lib/constants";
 import { ObjectId } from "mongodb";
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID!,
-  key_secret: process.env.RAZORPAY_KEY_SECRET!,
-});
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session?.user) {
-    return NextResponse.json({ detail: "Login zaroori hai" }, { status: 401 });
+    return NextResponse.json({ detail: "Please log in first." }, { status: 401 });
   }
 
   const userId = (session.user as any).id;
-  const { bookId, weeks } = await request.json();
+  const userEmail = session.user.email ?? "";
+  const userName = session.user.name ?? "User";
+
+  const { bookId, weeks = 1 } = await request.json();
+
+  if (!bookId) {
+    return NextResponse.json({ detail: "Book ID is required." }, { status: 400 });
+  }
+
+  const users = await getUsersCollection();
+  let userDoc = null;
+  try {
+    userDoc = await users.findOne({ _id: new ObjectId(userId) });
+  } catch {
+    userDoc = await users.findOne({ email: userEmail });
+  }
+
+  // Server-side security deposit gate
+  if (!userDoc?.securityDepositPaid) {
+    return NextResponse.json(
+      { detail: "Please pay your ₹500 security deposit on your profile page before renting books." },
+      { status: 403 }
+    );
+  }
 
   const books = await getBooksCollection();
   const book = await books.findOne({ id: bookId });
   if (!book || !book.available) {
-    return NextResponse.json({ detail: "Book available nahi hai" }, { status: 400 });
+    return NextResponse.json({ detail: "This book is currently unavailable for rent." }, { status: 400 });
   }
-
-  // --- yehi wo naya check hai: kitni books already hold ki hui hain ---
-  const users = await getUsersCollection();
-  const userDoc = await users.findOne({ _id: new ObjectId(userId) });
-  const maxActiveRentals = userDoc?.maxActiveRentals ?? DEFAULT_MAX_ACTIVE_RENTALS;
 
   const rentals = await getRentalsCollection();
-  const activeCount = await rentals.countDocuments({
-    renterId: userId,
-    status: "paid",
-    returnedAt: { $exists: false }, // jab tak return na ho, active maani jayegi
-  });
+  const rentalId = randomUUID();
+  const amount = (book.rentalPricePerWeek || 50) * weeks;
 
-  if (activeCount >= maxActiveRentals) {
-    return NextResponse.json(
-      { detail: `Tum abhi ${activeCount} book(s) hold kar rahe ho — pehle return karo, phir naya rent karo.` },
-      { status: 400 },
-    );
-  }
-  // --- check yahan tak ---
+  // Calculate due date: 7 days from now
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 7);
+  const dueDateISO = dueDate.toISOString();
 
-  const amountInPaise = (FIXED_RENTAL_PRICE_PER_WEEK * weeks + FIXED_SECURITY_DEPOSIT) * 100;
-
-  const order = await razorpay.orders.create({
-    amount: amountInPaise,
-    currency: "INR",
-    receipt: randomUUID(),
-  });
-
-  await rentals.insertOne({
-    id: order.receipt,
+  const rentalRecord = {
+    id: rentalId,
     bookId,
+    bookTitle: book.title,
     renterId: userId,
+    renterName: userName,
+    renterEmail: userEmail,
     weeks,
-    amount: amountInPaise / 100,
-    razorpayOrderId: order.id,
-    status: "created",
+    amount,
+    dueDateISO,
+    pickupLocation: `${book.lister?.pickupPoint?.label || "Pickup Point"}, ${book.lister?.pickupPoint?.addressLine || ""}`,
+    status: "pending_approval",
     createdAt: new Date(),
-  });
+  };
 
-  return NextResponse.json({ orderId: order.id, amount: amountInPaise, key: process.env.RAZORPAY_KEY_ID });
+  await rentals.insertOne(rentalRecord);
+
+  return NextResponse.json({
+    id: rentalId,
+    status: "pending_approval",
+    bookId,
+    message: "Rental request submitted! We will verify payment and send pickup details within 24 hours.",
+  });
+}
+
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    return NextResponse.json({ detail: "Not authenticated" }, { status: 401 });
+  }
+
+  const userId = (session.user as any).id;
+  const rentals = await getRentalsCollection();
+  const userRentals = await rentals
+    .find({ $or: [{ renterId: userId }, { renterEmail: session.user.email }] })
+    .sort({ createdAt: -1 })
+    .toArray();
+
+  return NextResponse.json(userRentals);
 }

@@ -6,17 +6,25 @@ import { useSession, signOut } from "next-auth/react";
 import { CORAL, FONT_DISPLAY, INK } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
+import { isAdminEmail } from "@/lib/admin-utils";
 
 const LINKS = [
   { href: "/browse", label: "Browse books" },
   { href: "/#how", label: "How it works" },
-  { href: "/#doodles", label: "The doodle thing" },
   { href: "/lister", label: "Become a lister" },
+  { href: "/admin", label: "Admin Panel", adminOnly: true },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+
+  const navLinks = LINKS.filter((link) => {
+    if (link.adminOnly) {
+      return isAdminEmail(session?.user?.email);
+    }
+    return true;
+  });
 
   return (
     <header className="relative z-10 border-b border-[#20304D]/15">
@@ -29,7 +37,7 @@ export default function Navbar() {
         </Link>
 
         <nav className="hidden items-center gap-8 text-[15px] font-medium md:flex">
-          {LINKS.map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -44,7 +52,7 @@ export default function Navbar() {
         <div className="flex items-center gap-3">
           {status === "authenticated" ? (
             <>
-              <Link href="/lister" className="hidden text-[15px] font-medium hover:opacity-70 sm:inline" style={{ color: INK }}>
+              <Link href="/profile" className="hidden text-[15px] font-medium hover:opacity-70 sm:inline" style={{ color: INK }}>
                 Hi, {session.user?.name?.split(" ")[0] ?? "there"}
               </Link>
               <button

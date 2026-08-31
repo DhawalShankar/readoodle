@@ -13,22 +13,22 @@ export default function MyListings() {
   useEffect(() => {
     fetchMyListings()
       .then(setBooks)
-      .catch(() => setError("Listings load nahi ho payin"));
+      .catch(() => setError("Failed to load listings"));
   }, []);
 
   async function handleDelete(bookId: string) {
-    if (!confirm("Ye listing delete karni hai? Ye undo nahi ho sakta.")) return;
+    if (!confirm("Delete this listing? This action cannot be undone.")) return;
     try {
       await deleteListing(bookId);
       setBooks((prev) => prev?.filter((b) => b.id !== bookId) ?? null);
     } catch {
-      alert("Delete nahi ho paya — try again");
+      alert("Failed to delete — please try again");
     }
   }
 
   if (error) return <p className="mt-6 text-sm text-red-600">{error}</p>;
   if (!books) return <p className="mt-6 text-sm text-[#20304D]/60">Loading...</p>;
-  if (books.length === 0) return <p className="mt-6 text-sm text-[#20304D]/60">Abhi tak koi listing nahi hai.</p>;
+  if (books.length === 0) return <p className="mt-6 text-sm text-[#20304D]/60">You haven't created any listings yet.</p>;
 
   return (
     <div className="mt-8 space-y-4">

@@ -1,15 +1,16 @@
-import type { Book, BookFilterState, Rental } from "@/types";
-import type { NewListingPayload } from "@/types"; // add this type to types.ts, see types-additions.ts
+import type { Book, BookFilterState, Rental, AdminUser, AdminRentalRequest } from "@/types";
+import type { NewListingPayload } from "@/types";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ??
   (typeof window === "undefined"
-    ? `http://localhost:${process.env.PORT ?? 3000}/api` // server-side: absolute URL zaroori hai
-    : "/api"); // client-side: relative theek hai, CORS-free
+    ? `http://localhost:${process.env.PORT ?? 3000}/api`
+    : "/api");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   if (!res.ok) {
@@ -18,7 +19,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json();
 }
 
-/** GET /books/ — catalog search. Filters map to query params handled by apps/books views.py. */
+/** GET /books/ — catalog search. */
 export function fetchBooks(filters: Partial<BookFilterState> = {}) {
   const params = new URLSearchParams();
   if (filters.query) params.set("q", filters.query);
@@ -27,7 +28,8 @@ export function fetchBooks(filters: Partial<BookFilterState> = {}) {
   if (filters.pickupCity && filters.pickupCity !== "all") params.set("pickup_city", filters.pickupCity);
   if (filters.maxPricePerWeek) params.set("max_price", String(filters.maxPricePerWeek));
   if (filters.sort) params.set("sort", filters.sort);
-  return request<Book[]>(`/books/?${params.toString()}`);
+  const query = params.toString();
+  return request<Book[]>(`/books/${query ? `?${query}` : ""}`);
 }
 
 /** GET /books/:id/ */
@@ -35,12 +37,15 @@ export function fetchBook(bookId: string) {
   return request<Book>(`/books/${bookId}/`);
 }
 
-/** POST /rentals/ — kicks off the checkout flow described in PRD §3.3. */
+/** POST /rentals/ — submits a rental request. */
 export function createRental(payload: { bookId: string; weeks: number }) {
-  return request<Rental>(`/rentals/`, { method: "POST", body: JSON.stringify(payload) });
+  return request<{ id: string; status: string; bookId: string; message?: string }>(`/rentals/`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
-/** GET /rentals/mine/ — "My Rentals" dashboard, active + history depending on `status`. */
+/** GET /rentals/mine/ — "My Rentals" dashboard. */
 export function fetchMyRentals(status: "active" | "history" = "active") {
   return request<Rental[]>(`/rentals/mine/?status=${status}`);
 }
@@ -57,25 +62,75 @@ export function extendRental(rentalId: string, additionalWeeks: number) {
   });
 }
 
-/* ---------------------------------------------------------------------
- * Append these to the bottom of lib/api.ts — needed by the new
- * lister listing flow (components/lister/ListingForm.tsx, app/lister).
- * ------------------------------------------------------------------- */
-
-
-/** POST /books/ — a lister (or Readoodle) adding a new book. Backend must
- *  enforce the pricing caps server-side too (rental ≤ 50% of bookPrice,
- *  deposit ≤ 100%) — never trust the client-side check alone. */
 export function createListing(payload: NewListingPayload) {
   return request<Book>(`/books/`, { method: "POST", body: JSON.stringify(payload) });
 }
 
-/** GET /books/mine/ — listings belonging to the logged-in user (their
- *  "list your books" toggle must be on for this to return anything). */
 export function fetchMyListings() {
   return request<Book[]>(`/books/mine/`);
 }
 
 export function deleteListing(bookId: string) {
   return request<{ deleted: boolean }>(`/books/${bookId}/`, { method: "DELETE" });
+}
+
+export function confirmPickup(rentalId: string) {
+  return request<Rental>(`/rentals/${rentalId}/confirm-pickup/`, { method: "POST" });
+}
+
+export function contactPickup(rentalId: string, message?: string) {
+  return request<{ sent: boolean }>(`/rentals/${rentalId}/contact-pickup/`, {
+    method: "POST",
+    body: JSON.stringify(message ? { message } : {}),
+  });
+}
+
+export function updateListing(bookId: string, payload: Partial<NewListingPayload>) {
+  return request<Book>(`/books/${bookId}/`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function setBookAvailability(bookId: string, availability: "available" | "rented") {
+  return updateListing(bookId, { availability } as Partial<NewListingPayload>);
+}
+
+/** GET /profile/ — deposit + basic account status. */
+export function fetchProfile() {
+  return request<{ securityDepositPaid: boolean; user?: { name: string; email: string } }>(`/profile/`);
+}
+
+/* ADMIN PANEL API FUNCTIONS */
+export function fetchAdminUsers() {
+  return request<AdminUser[]>(`/admin/users`);
+}
+
+export function updateAdminUserDeposit(userId: string, securityDepositPaid: boolean) {
+  return request<AdminUser>(`/admin/users/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ securityDepositPaid }),
+  });
+}
+
+export function fetchAdminRentals() {
+  return request<AdminRentalRequest[]>(`/admin/rentals`);
+}
+
+export function updateAdminRentalStatus(rentalId: string, status: "pending_approval" | "approved" | "rejected") {
+  return request<AdminRentalRequest>(`/admin/rentals/${rentalId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export function updateAdminBookAvailability(bookId: string, available: boolean) {
+  return request<Book>(`/admin/books/${bookId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ available }),
+  });
+}
+
+export function fetchAdminListers() {
+  return request<any[]>(`/admin/listers`);
 }

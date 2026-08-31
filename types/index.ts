@@ -90,3 +90,25 @@ export interface NewListingPayload {
   pickupAddressLine: string;
   pickupCity: string;
 }
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  securityDepositPaid: boolean;
+  createdAt?: string;
+}
+
+export interface AdminRentalRequest {
+  id: string;
+  bookId: string;
+  bookTitle: string;
+  renterId: string;
+  renterName: string;
+  renterEmail: string;
+  weeks: number;
+  amount: number;
+  pickupLocation: string;
+  status: "pending_approval" | "approved" | "rejected";
+  createdAt: string;
+}

@@ -26,14 +26,14 @@ export default function SignupPage() {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.detail ?? "Signup fail ho gaya, try again");
+        setError(data.detail ?? "Signup failed — please try again");
         setSubmitting(false);
         return;
       }
 
       router.push("/login");
     } catch {
-      setError("Kuch galat ho gaya, try again");
+      setError("Something went wrong — please try again");
       setSubmitting(false);
     }
   }
