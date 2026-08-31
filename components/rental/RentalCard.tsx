@@ -12,10 +12,9 @@ interface EnhancedRentalProps {
     totalPayableOnReturn?: number;
     pickupLocation?: string;
   };
-  onExtend?: (rentalId: string) => void;
 }
 
-export default function RentalCard({ rental, onExtend }: EnhancedRentalProps) {
+export default function RentalCard({ rental }: EnhancedRentalProps) {
   const remaining = daysUntil(rental.dueDateISO);
   const isReturned = rental.status === "returned";
   const isPending = (rental.status as any) === "pending_approval";
@@ -56,14 +55,6 @@ export default function RentalCard({ rental, onExtend }: EnhancedRentalProps) {
               )}
             </div>
           </div>
-        </div>
-
-        <div className="flex flex-col items-start gap-2 sm:items-end">
-          {!isReturned && onExtend && (
-            <Button variant="outline" onClick={() => onExtend(rental.id)}>
-              Extend (+1 Wk)
-            </Button>
-          )}
         </div>
       </div>
 

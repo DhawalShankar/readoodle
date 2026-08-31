@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Rental } from "@/types";
 import { FONT_DISPLAY, FONT_MONO, INK, PAPER } from "@/lib/theme";
-import { extendRental, fetchMyRentals } from "@/lib/api";
+import { fetchMyRentals } from "@/lib/api";
 import RentalCard from "@/components/rental/RentalCard";
 
 export default function MyRentalsPage() {
@@ -34,16 +34,6 @@ export default function MyRentalsPage() {
     };
   }, [status, tab]);
 
-  async function handleExtend(rentalId: string) {
-    try {
-      await extendRental(rentalId, 1);
-      const data = await fetchMyRentals(tab);
-      setRentals(data);
-    } catch (err: any) {
-      alert(err?.message || "Failed to extend rental.");
-    }
-  }
-
   if (status === "loading") {
     return (
       <div style={{ backgroundColor: PAPER }} className="flex min-h-screen items-center justify-center p-6 text-center">
@@ -64,6 +54,9 @@ export default function MyRentalsPage() {
         <h1 style={{ fontFamily: FONT_DISPLAY }} className="text-5xl font-bold">
           My rentals
         </h1>
+        <p className="mt-2 text-[#20304D]/70">
+          Track your borrowed books, drop-off locations, due dates, and return history.
+        </p>
 
         <div className="mt-6 flex gap-1 border-b border-[#20304D]/15">
           {(["active", "history"] as const).map((t) => (
@@ -76,7 +69,7 @@ export default function MyRentalsPage() {
                 borderBottom: tab === t ? `2px solid ${INK}` : "2px solid transparent",
               }}
             >
-              {t === "active" ? "Active" : "History"}
+              {t === "active" ? "Active Rentals" : "Rental History"}
             </button>
           ))}
         </div>
@@ -95,7 +88,7 @@ export default function MyRentalsPage() {
           )}
 
           {rentals.map((rental) => (
-            <RentalCard key={rental.id} rental={rental} onExtend={handleExtend} />
+            <RentalCard key={rental.id} rental={rental} />
           ))}
         </div>
       </div>
