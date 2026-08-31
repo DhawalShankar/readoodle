@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Book, ListerStats } from "@/types";
 import { FONT_DISPLAY, FONT_MONO, INK, PAPER, SAGE, CORAL } from "@/lib/theme";
@@ -12,7 +13,8 @@ import Badge from "@/components/ui/Badge";
 import DashedCard from "@/components/ui/DashedCard";
 
 export default function ListerPage() {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [listings, setListings] = useState<Book[]>([]);
   const [stats, setStats] = useState<ListerStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -20,6 +22,12 @@ export default function ListerPage() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const isOwner = Boolean(stats?.isAdmin || isAdminEmail(session?.user?.email));
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
 
   const loadData = () => {
     setLoading(true);
@@ -37,8 +45,10 @@ export default function ListerPage() {
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (status === "authenticated") {
+      loadData();
+    }
+  }, [status]);
 
   async function handleToggleAvailability(e: React.MouseEvent, book: Book) {
     e.preventDefault();
@@ -73,6 +83,20 @@ export default function ListerPage() {
     } finally {
       setDeletingId(null);
     }
+  }
+
+  if (status === "loading") {
+    return (
+      <div style={{ backgroundColor: PAPER }} className="flex min-h-screen items-center justify-center p-6 text-center">
+        <p style={{ fontFamily: FONT_MONO }} className="text-sm text-[#20304D]/60">
+          Checking login status…
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return null;
   }
 
   return (

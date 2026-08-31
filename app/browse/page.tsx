@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import type { Book, BookFilterState } from "@/types";
-import { FONT_DISPLAY, PAPER } from "@/lib/theme";
+import { FONT_DISPLAY, FONT_MONO, PAPER } from "@/lib/theme";
 import { fetchBooks } from "@/lib/api";
 import BookCard from "@/components/book/BookCard";
 import BookFilters from "@/components/book/BookFilters";
@@ -17,12 +19,22 @@ const DEFAULT_FILTERS: BookFilterState = {
 };
 
 export default function BrowsePage() {
+  const router = useRouter();
+  const { status } = useSession();
   const [filters, setFilters] = useState<BookFilterState>(DEFAULT_FILTERS);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
     let cancelled = false;
     setLoading(true);
     setError(null);
@@ -36,13 +48,27 @@ export default function BrowsePage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.query, filters.genre, filters.availability, filters.pickupCity, filters.maxPricePerWeek, filters.sort]);
+  }, [status, filters.query, filters.genre, filters.availability, filters.pickupCity, filters.maxPricePerWeek, filters.sort]);
 
   const resultsLabel = useMemo(() => {
     if (loading) return "Fetching books…";
     if (error) return error;
     return `${books.length} book${books.length === 1 ? "" : "s"} up for rent`;
   }, [loading, error, books.length]);
+
+  if (status === "loading") {
+    return (
+      <div style={{ backgroundColor: PAPER }} className="flex min-h-screen items-center justify-center p-6 text-center">
+        <p style={{ fontFamily: FONT_MONO }} className="text-sm text-[#20304D]/60">
+          Checking login status…
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return null;
+  }
 
   return (
     <div style={{ backgroundColor: PAPER }} className="min-h-screen">

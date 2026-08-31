@@ -1,17 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import type { Rental } from "@/types";
 import { FONT_DISPLAY, FONT_MONO, INK, PAPER } from "@/lib/theme";
 import { extendRental, fetchMyRentals, returnRental } from "@/lib/api";
 import RentalCard from "@/components/rental/RentalCard";
 
 export default function MyRentalsPage() {
+  const router = useRouter();
+  const { status } = useSession();
   const [tab, setTab] = useState<"active" | "history">("active");
   const [rentals, setRentals] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/login");
+    }
+  }, [status, router]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
     let cancelled = false;
     setLoading(true);
     fetchMyRentals(tab)
@@ -20,7 +32,7 @@ export default function MyRentalsPage() {
     return () => {
       cancelled = true;
     };
-  }, [tab]);
+  }, [status, tab]);
 
   async function handleReturn(rentalId: string) {
     const updated = await returnRental(rentalId);
@@ -30,6 +42,20 @@ export default function MyRentalsPage() {
   async function handleExtend(rentalId: string) {
     const updated = await extendRental(rentalId, 1);
     setRentals((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+  }
+
+  if (status === "loading") {
+    return (
+      <div style={{ backgroundColor: PAPER }} className="flex min-h-screen items-center justify-center p-6 text-center">
+        <p style={{ fontFamily: FONT_MONO }} className="text-sm text-[#20304D]/60">
+          Checking login status…
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "unauthenticated") {
+    return null;
   }
 
   return (

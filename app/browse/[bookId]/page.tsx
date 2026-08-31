@@ -1,4 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { getBooksCollection } from "@/lib/mongodb";
 import type { Book } from "@/types";
 import { CORAL, FONT_DISPLAY, FONT_MONO, INK, PAPER, SAGE } from "@/lib/theme";
@@ -13,6 +15,11 @@ export default async function BookDetailPage({
 }: {
   params: Promise<{ bookId: string }>;
 }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user) {
+    redirect("/login");
+  }
+
   const { bookId } = await params;
 
   let book: Book | null = null;
