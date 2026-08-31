@@ -43,6 +43,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ detail: "This book is currently unavailable for rent." }, { status: 400 });
   }
 
+  // Block listers from renting their own books
+  const isOwnBook = book.lister?.id === userId || (book.lister?.email && book.lister.email === userEmail);
+  if (isOwnBook) {
+    return NextResponse.json(
+      { detail: "You can't rent your own listed book." },
+      { status: 403 }
+    );
+  }
+
   const rentals = await getRentalsCollection();
   const rentalId = randomUUID();
   const amount = (book.rentalPricePerWeek || 50) * weeks;

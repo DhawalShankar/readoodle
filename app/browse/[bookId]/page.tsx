@@ -33,6 +33,8 @@ export default async function BookDetailPage({
   if (!book) notFound();
 
   const isReadoodle = book.lister.source === "readoodle";
+  const userId = (session.user as any).id;
+  const isOwnListing = book.lister?.id === userId || (book.lister?.email && book.lister.email === session.user.email);
 
   return (
     <div style={{ backgroundColor: PAPER }} className="min-h-screen">
@@ -51,6 +53,7 @@ export default async function BookDetailPage({
           <div className="mt-4 flex items-center gap-2">
             <Badge color={isReadoodle ? CORAL : SAGE}>{isReadoodle ? "Readoodle inventory" : `Listed by ${book.lister.name}`}</Badge>
             <Badge color={book.available ? SAGE : INK}>{book.available ? "Available now" : "Currently rented out"}</Badge>
+            {isOwnListing && <Badge color={INK}>Your listing</Badge>}
           </div>
         </div>
 
@@ -97,12 +100,22 @@ export default async function BookDetailPage({
           </div>
 
           <div className="mt-8">
-            <Button href={`/rent/${book.id}`} variant="filled" className={!book.available ? "pointer-events-none opacity-40" : ""}>
-              {book.available ? "Rent now" : "Currently unavailable"}
-            </Button>
+            {isOwnListing ? (
+              <p className="text-sm font-semibold" style={{ color: INK }}>
+                This is your own listing — you can't rent it. Manage it from your{" "}
+                <a href="/lister" className="underline">
+                  Lister Dashboard
+                </a>
+                .
+              </p>
+            ) : (
+              <Button href={`/rent/${book.id}`} variant="filled" className={!book.available ? "pointer-events-none opacity-40" : ""}>
+                {book.available ? "Rent now" : "Currently unavailable"}
+              </Button>
+            )}
           </div>
 
-          {!isReadoodle && (
+          {!isReadoodle && !isOwnListing && (
             <p className="mt-4 max-w-xl text-xs leading-relaxed text-[#20304D]/50">
               This book is listed by a fellow reader, not Readoodle itself. Condition and any dispute about this
               rental are between you and {book.lister.name} — Readoodle handles discovery, payment, and payouts.
