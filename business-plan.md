@@ -14,17 +14,18 @@ Welcome to **Readoodle** — Kanpur's premier community book rental shelf. This 
 
 ### 📝 Mandatory Step-by-Step Instructions
 1. **Pay Security Deposit**: Before renting any book, navigate to your profile and pay the one-time **₹500 refundable security deposit**. Ensure your payment email matches your Readoodle registered email.
-2. **Submit Rental Request**: Select a book, choose rental duration (weeks), and submit your request.
+2. **Submit Rental Request**: Select a book and submit your rental request for a standard 7-day rental period.
 3. **Wait for Approval**: Wait for Admin payment verification. Once approved, you will receive the Lister's pickup location name and address.
 4. **Collect Book**: Visit the Lister's pickup point to receive the book.
-5. **Return on Time**: Return the book to the exact same pickup point on or before the 7-day due date (or extend duration via "My Rentals").
+5. **Return on Time & Track Rentals**: Return the book to the exact same pickup point on or before the 7-day due date. Track your active books, due dates, drop-off pickup points, and accrued late fees (₹10/day for overdue books) on your **My Rentals** dashboard (`/account/rentals`).
+6. **Book Return Completion**: Return the book to the Lister at the designated drop-off point. There is no manual extension system — books kept past 7 days automatically incur ₹10/day late fees. Once the Lister receives the book and marks it "Available" on their Lister Dashboard, your rental is completed and moves to your Rental History tab.
 
 ### ⚠️ Critical Warnings & Penalties for Borrowers
 > [!WARNING]
 > **Locked Rentals Without Deposit**: Rental requests are strictly blocked until your ₹500 security deposit is verified as **PAID**.
 
 > [!WARNING]
-> **Overdue Late Fines**: A late fee of **₹10 per day** applies automatically for books returned past the 7-day due date.
+> **Overdue Late Fines**: A late fee of **₹10 per day** applies automatically for books returned past the 7-day due date. Total payable on drop-off equals the base rental fee plus accumulated late charges.
 
 > [!CAUTION]
 > **Damage & Loss Penalty**: If a book is returned damaged (torn pages, writing/water stains) or lost, your ₹500 security deposit will be forfeited to compensate the book owner.
@@ -41,9 +42,10 @@ Welcome to **Readoodle** — Kanpur's premier community book rental shelf. This 
 - **Fixed Revenue Model**:
   - Renter pays: **₹50 per 7 days**
   - Readoodle commission (flat 2%): **₹1**
-  - **Your Net Earnings: ₹49 per rental**
+  - **Third-Party Lister Net Earnings: ₹49 per rental** (Released T+2 days via UPI)
+  - **Readoodle Official Inventory (`cosmoindiaprakashan@gmail.com`)**: Retains 100% of rental revenue directly with no payout holds or transfers required.
 - **Catalog Self-Management**: Manage ONLY your own listed books from your personal **Lister Dashboard** (`/lister`).
-- **Availability Toggles**: Mark your books as "Available" or "Rented out" directly from your dashboard.
+- **Availability & Return Confirmation**: Mark your books as "Available" or "Rented out" directly from your dashboard. Clicking "Mark Available" confirms a book has been returned by a borrower.
 
 ### 📝 Mandatory Step-by-Step Instructions
 1. **Provide Mandatory Payout Info**: When listing a book, you MUST enter a valid **UPI ID** (e.g. `username@upi`) and a **10-digit Phone Number**.
