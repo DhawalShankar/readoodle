@@ -35,13 +35,23 @@ export default function MyRentalsPage() {
   }, [status, tab]);
 
   async function handleReturn(rentalId: string) {
-    const updated = await returnRental(rentalId);
-    setRentals((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    try {
+      await returnRental(rentalId);
+      const data = await fetchMyRentals(tab);
+      setRentals(data);
+    } catch (err: any) {
+      alert(err?.message || "Failed to mark rental as returned.");
+    }
   }
 
   async function handleExtend(rentalId: string) {
-    const updated = await extendRental(rentalId, 1);
-    setRentals((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    try {
+      await extendRental(rentalId, 1);
+      const data = await fetchMyRentals(tab);
+      setRentals(data);
+    } catch (err: any) {
+      alert(err?.message || "Failed to extend rental.");
+    }
   }
 
   if (status === "loading") {
