@@ -1,21 +1,28 @@
 import { notFound } from "next/navigation";
-import { fetchBook } from "@/lib/api";
+import { getBooksCollection } from "@/lib/mongodb";
+import type { Book } from "@/types";
 import { CORAL, FONT_DISPLAY, FONT_MONO, INK, PAPER, SAGE } from "@/lib/theme";
 import { formatRupees } from "@/lib/utils";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import DashedCard from "@/components/ui/DashedCard";
 
-// Next.js 15: `params` is a Promise on Server Components — must be
-// awaited. If you're on Next.js 14, change this to
-// `{ params }: { params: { bookId: string } }` and drop the `await`.
+// Next.js 15: `params` is a Promise on Server Components — must be awaited.
 export default async function BookDetailPage({
   params,
 }: {
   params: Promise<{ bookId: string }>;
 }) {
   const { bookId } = await params;
-  const book = await fetchBook(bookId).catch(() => null);
+
+  let book: Book | null = null;
+  try {
+    const collection = await getBooksCollection();
+    book = (await collection.findOne({ id: bookId }, { projection: { _id: 0 } })) as Book | null;
+  } catch (err) {
+    console.error("Error fetching book details from MongoDB:", err);
+  }
+
   if (!book) notFound();
 
   const isReadoodle = book.lister.source === "readoodle";

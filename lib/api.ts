@@ -4,7 +4,9 @@ import type { NewListingPayload } from "@/types";
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ??
   (typeof window === "undefined"
-    ? `http://localhost:${process.env.PORT ?? 3000}/api`
+    ? process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}/api`
+      : `http://localhost:${process.env.PORT ?? 3000}/api`
     : "/api");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
