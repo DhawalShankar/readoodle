@@ -346,105 +346,109 @@ export default function AdminDashboardPage() {
         )}
 
         {/* TAB 2: RENTALS */}
-{activeTab === "rentals" && (
-  <div className="mt-8">
-    <DashedCard>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold" style={{ color: INK }}>
-          Rental Requests & Pickup Approvals
-        </h2>
-        <p style={{ fontFamily: FONT_MONO }} className="text-xs text-[#20304D]/60">
-          Total Requests: {rentals.length}
-        </p>
-      </div>
+        {activeTab === "rentals" && (
+          <div className="mt-8">
+            <DashedCard>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold" style={{ color: INK }}>
+                  Rental Requests & Pickup Approvals
+                </h2>
+                <p style={{ fontFamily: FONT_MONO }} className="text-xs text-[#20304D]/60">
+                  Total Requests: {rentals.length}
+                </p>
+              </div>
 
-      {rentalsLoading ? (
-        <p className="py-8 text-center text-sm text-[#20304D]/50" style={{ fontFamily: FONT_MONO }}>
-          Loading rental requests...
-        </p>
-      ) : rentals.length === 0 ? (
-        <p className="py-8 text-center text-sm text-[#20304D]/50">No rental requests submitted yet.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-[#20304D]/15 text-xs font-semibold uppercase tracking-wider text-[#20304D]/60">
-                <th className="pb-3">Book</th>
-                <th className="pb-3">Listed By</th>
-                <th className="pb-3">Renter Details</th>
-                <th className="pb-3">Pickup Location</th>
-                <th className="pb-3">Amount</th>
-                <th className="pb-3">Status</th>
-                <th className="pb-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#20304D]/10">
-              {rentals.map((rental) => (
-                <tr key={rental.id} className="hover:bg-black/5">
-                  <td className="py-3.5 font-semibold">{rental.bookTitle}</td>
-                  <td className="py-3.5">
-                    {rental.listerSource === "readoodle" ? (
-                      <Badge color={SAGE}>READOODLE INVENTORY</Badge>
-                    ) : (
-                      <div className="text-xs">
-                        <div className="font-medium text-[#20304D]">{rental.listerName}</div>
-                        <div className="text-[#20304D]/60">{rental.listerEmail}</div>
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3.5 text-xs">
-                    <div className="font-medium text-[#20304D]">{rental.renterName}</div>
-                    <div className="text-[#20304D]/60">{rental.renterEmail}</div>
-                  </td>
-                  <td className="py-3.5 text-xs text-[#20304D]/80 max-w-[200px] truncate">
-                    {rental.pickupLocation}
-                    {rental.pickupTimeSlot && (
-                      <div className="text-[#20304D]/50 mt-0.5">🕐 {rental.pickupTimeSlot}</div>
-                    )}
-                  </td>
-                  <td className="py-3.5 font-medium">₹{rental.amount}</td>
-                  <td className="py-3.5">
-                    {rental.status === "approved" && <Badge color={SAGE}>APPROVED</Badge>}
-                    {rental.status === "rejected" && <Badge color={CORAL}>REJECTED</Badge>}
-                    {rental.status === "pending_approval" && (
-                      <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 border border-amber-300">
-                        PENDING VERIFICATION
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3.5 text-right">
-                    {rental.status === "pending_approval" ? (
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() => handleUpdateRentalStatus(rental.id, "approved")}
-                          disabled={actionLoading === `rental-${rental.id}`}
-                          className="rounded-sm px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
-                          style={{ backgroundColor: SAGE }}
-                        >
-                          Approve & Send Email
-                        </button>
-                        <button
-                          onClick={() => handleUpdateRentalStatus(rental.id, "rejected")}
-                          disabled={actionLoading === `rental-${rental.id}`}
-                          className="rounded-sm px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
-                          style={{ backgroundColor: CORAL }}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="text-xs text-[#20304D]/50 uppercase font-mono">{rental.status}</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </DashedCard>
-  </div>
-)}
+              {rentalsLoading ? (
+                <p className="py-8 text-center text-sm text-[#20304D]/50" style={{ fontFamily: FONT_MONO }}>
+                  Loading rental requests...
+                </p>
+              ) : rentals.length === 0 ? (
+                <p className="py-8 text-center text-sm text-[#20304D]/50">No rental requests submitted yet.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1000px] text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-[#20304D]/15 text-xs font-semibold uppercase tracking-wider text-[#20304D]/60">
+                        <th className="pb-3 pr-4 whitespace-nowrap">Book</th>
+                        <th className="pb-3 pr-4 whitespace-nowrap">Listed By</th>
+                        <th className="pb-3 pr-4 whitespace-nowrap">Renter Details</th>
+                        <th className="pb-3 pr-4 whitespace-nowrap">Pickup Location</th>
+                        <th className="pb-3 pr-4 whitespace-nowrap">Amount</th>
+                        <th className="pb-3 pr-4 whitespace-nowrap">Status</th>
+                        <th className="pb-3 text-right whitespace-nowrap">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#20304D]/10">
+                      {rentals.map((rental) => (
+                        <tr key={rental.id} className="hover:bg-black/5">
+                          <td className="py-3.5 pr-4 font-semibold align-top">{rental.bookTitle}</td>
+                          <td className="py-3.5 pr-4 align-top">
+                            {rental.listerSource === "readoodle" ? (
+                              <Badge color={SAGE}>READOODLE INVENTORY</Badge>
+                            ) : (
+                              <div className="text-xs min-w-[160px]">
+                                <div className="font-medium text-[#20304D]">{rental.listerName}</div>
+                                <div className="text-[#20304D]/60 break-all">{rental.listerEmail}</div>
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-3.5 pr-4 text-xs align-top">
+                            <div className="min-w-[160px]">
+                              <div className="font-medium text-[#20304D]">{rental.renterName}</div>
+                              <div className="text-[#20304D]/60 break-all">{rental.renterEmail}</div>
+                            </div>
+                          </td>
+                          <td className="py-3.5 pr-4 text-xs text-[#20304D]/80 align-top">
+                            <div className="min-w-[180px] max-w-[220px]">
+                              <span className="block truncate">{rental.pickupLocation}</span>
+                              {rental.pickupTimeSlot && (
+                                <span className="block text-[#20304D]/50 mt-0.5">🕐 {rental.pickupTimeSlot}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3.5 pr-4 font-medium align-top whitespace-nowrap">₹{rental.amount}</td>
+                          <td className="py-3.5 pr-4 align-top whitespace-nowrap">
+                            {rental.status === "approved" && <Badge color={SAGE}>APPROVED</Badge>}
+                            {rental.status === "rejected" && <Badge color={CORAL}>REJECTED</Badge>}
+                            {rental.status === "pending_approval" && (
+                              <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 border border-amber-300 whitespace-nowrap">
+                                PENDING VERIFICATION
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3.5 text-right align-top">
+                            {rental.status === "pending_approval" ? (
+                              <div className="flex justify-end gap-2 whitespace-nowrap">
+                                <button
+                                  onClick={() => handleUpdateRentalStatus(rental.id, "approved")}
+                                  disabled={actionLoading === `rental-${rental.id}`}
+                                  className="rounded-sm px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50 whitespace-nowrap"
+                                  style={{ backgroundColor: SAGE }}
+                                >
+                                  Approve & Send Email
+                                </button>
+                                <button
+                                  onClick={() => handleUpdateRentalStatus(rental.id, "rejected")}
+                                  disabled={actionLoading === `rental-${rental.id}`}
+                                  className="rounded-sm px-2.5 py-1 text-xs font-semibold text-white disabled:opacity-50"
+                                  style={{ backgroundColor: CORAL }}
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-[#20304D]/50 uppercase font-mono">{rental.status}</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </DashedCard>
+          </div>
+        )}
 
         {/* TAB 3: BOOKS */}
         {activeTab === "books" && (

@@ -78,12 +78,17 @@ export default async function BookDetailPage({
             </DashedCard>
 
             <DashedCard>
-              <p style={{ fontFamily: FONT_MONO }} className="text-xs uppercase tracking-widest text-[#20304D]/55">
-                Pickup point
+            <p style={{ fontFamily: FONT_MONO }} className="text-xs uppercase tracking-widest text-[#20304D]/55">
+              Pickup poinfitt
+            </p>
+            <p className="mt-1 font-medium">{book.lister.pickupPoint.label}</p>
+            <p className="mt-1 text-xs text-[#20304D]/55">{book.lister.pickupPoint.addressLine}</p>
+            {book.lister.pickupPoint.pickupTimeSlot && (
+              <p className="mt-2 text-xs font-medium" style={{ color: INK }}>
+                🕐 {book.lister.pickupPoint.pickupTimeSlot}
               </p>
-              <p className="mt-1 font-medium">{book.lister.pickupPoint.label}</p>
-              <p className="mt-1 text-xs text-[#20304D]/55">{book.lister.pickupPoint.addressLine}</p>
-            </DashedCard>
+            )}
+          </DashedCard>
           </div>
 
           <div className="mt-6 flex items-start gap-3 border-l-2 pl-4" style={{ borderColor: isReadoodle ? CORAL : SAGE }}>
