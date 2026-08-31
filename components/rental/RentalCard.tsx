@@ -58,6 +58,13 @@ export default function RentalCard({ rental }: EnhancedRentalProps) {
         </div>
       </div>
 
+      {/* Overdue Late Fee Notice Banner */}
+      {overdue && (
+        <div className="p-3 bg-[#FFF5F2] border-l-4 rounded text-xs font-medium" style={{ borderColor: CORAL, color: INK }}>
+          ⚠️ <strong>You are {overdueDays} day{overdueDays === 1 ? "" : "s"} late.</strong> You have to pay <strong>{formatRupees(lateFine)} late fee</strong> on return (accumulated at ₹10/day). Total payable on drop-off is <strong>{formatRupees(totalPayableOnReturn)}</strong>.
+        </div>
+      )}
+
       {/* Return Drop-Off Location */}
       <div className="text-xs text-[#20304D]/80 bg-[#F4F1EA] px-3 py-2 rounded flex items-center justify-between">
         <p>
