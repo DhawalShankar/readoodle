@@ -19,6 +19,10 @@ export async function GET() {
       weeks: r.weeks || 1,
       amount: r.amount || 50,
       pickupLocation: r.pickupLocation || "Pickup Point",
+      pickupTimeSlot: r.pickupTimeSlot || "Contact lister for timing",
+      listerName: r.listerName || "Unknown",
+      listerEmail: r.listerEmail || "",
+      listerSource: r.listerSource || "lister",
       status: r.status || "pending_approval",
       createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString(),
     }));

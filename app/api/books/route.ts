@@ -118,7 +118,8 @@ export async function POST(request: NextRequest) {
     lister: {
       id: userId,
       name: session.user.name ?? "You",
-      source: "lister",
+      email: session.user.email ?? "",
+      source: isOwner ? "readoodle" : "lister",
       upiId,
       phoneNumber,
       pickupPoint: {
@@ -126,6 +127,7 @@ export async function POST(request: NextRequest) {
         label: payload.pickupLabel,
         addressLine: payload.pickupAddressLine,
         city: payload.pickupCity,
+        pickupTimeSlot: payload.pickupTimeSlot || "Contact lister for timing",
       },
     },
     bookmark: {

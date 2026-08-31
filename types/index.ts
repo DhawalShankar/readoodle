@@ -8,11 +8,13 @@ export interface PickupPoint {
   label: string; // e.g. "Readoodle — Swaroop Nagar" or a lister's registered address
   addressLine: string;
   city: string;
+  pickupTimeSlot: string; // e.g. "Mon–Sat, 6 PM – 9 PM"
 }
 
 export interface Lister {
   id: string;
   name: string;
+  email: string;
   source: ListingSource; // "readoodle" for Readoodle's own inventory
   pickupPoint: PickupPoint;
   upiId?: string;
@@ -91,6 +93,7 @@ export interface NewListingPayload {
   pickupLabel: string;
   pickupAddressLine: string;
   pickupCity: string;
+  pickupTimeSlot: string;
   upiId: string;
   phoneNumber: string;
 }
@@ -113,6 +116,10 @@ export interface AdminRentalRequest {
   weeks: number;
   amount: number;
   pickupLocation: string;
+  pickupTimeSlot: string;
+  listerName: string;
+  listerEmail: string;
+  listerSource: "readoodle" | "lister";
   status: "pending_approval" | "approved" | "rejected";
   createdAt: string;
 }
@@ -161,4 +168,4 @@ export interface ListerStats {
     netAmount: number;
     createdAt: string;
   }>;
-}
+}

@@ -63,6 +63,10 @@ export async function POST(request: Request) {
     amount,
     dueDateISO,
     pickupLocation: `${book.lister?.pickupPoint?.label || "Pickup Point"}, ${book.lister?.pickupPoint?.addressLine || ""}`,
+    pickupTimeSlot: book.lister?.pickupPoint?.pickupTimeSlot || "Contact lister for timing",
+    listerName: book.lister?.name || "Unknown",
+    listerEmail: book.lister?.email || "",
+    listerSource: book.lister?.source || "lister",
     status: "pending_approval",
     createdAt: new Date(),
   };

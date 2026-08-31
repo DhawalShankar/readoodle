@@ -27,6 +27,7 @@ type FormState = {
   coverColor: string;
   pickupLabel: string;
   pickupAddressLine: string;
+  pickupTimeSlot: string;
   upiId: string;
   phoneNumber: string;
 };
@@ -40,6 +41,7 @@ const EMPTY: FormState = {
   coverColor: COVER_COLORS[0],
   pickupLabel: "",
   pickupAddressLine: "",
+  pickupTimeSlot: "",
   upiId: "",
   phoneNumber: "",
 };
@@ -82,6 +84,7 @@ export default function ListingForm() {
       form.author.trim().length > 0 &&
       form.pickupLabel.trim().length > 0 &&
       form.pickupAddressLine.trim().length > 0 &&
+      form.pickupTimeSlot.trim().length > 0 &&
       (isOwner || (form.upiId.trim().length > 0 && form.phoneNumber.trim().length > 0))
     );
   }, [form, isOwner]);
@@ -126,6 +129,7 @@ export default function ListingForm() {
         pickupLabel: form.pickupLabel.trim(),
         pickupAddressLine: form.pickupAddressLine.trim(),
         pickupCity: "Kanpur",
+        pickupTimeSlot: form.pickupTimeSlot.trim(),
         upiId: trimmedUpi,
         phoneNumber: trimmedPhone,
         bookPrice: 0,
@@ -280,6 +284,15 @@ export default function ListingForm() {
             value={form.pickupAddressLine}
             onChange={(e) => update("pickupAddressLine", e.target.value)}
             placeholder="Street / landmark — shown to renters after checkout"
+            className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
+          />
+        </Field>
+
+        <Field label="Pickup time slot">
+          <input
+            value={form.pickupTimeSlot}
+            onChange={(e) => update("pickupTimeSlot", e.target.value)}
+            placeholder="e.g. Mon–Sat, 6 PM – 9 PM"
             className="w-full border border-[#20304D]/25 bg-transparent px-3 py-2 text-sm outline-none focus:border-[#20304D]"
           />
         </Field>

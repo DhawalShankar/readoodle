@@ -66,6 +66,10 @@ export async function PATCH(
       weeks: updated?.weeks,
       amount: updated?.amount,
       pickupLocation: updated?.pickupLocation,
+      pickupTimeSlot: updated?.pickupTimeSlot || "Contact lister for timing",
+      listerName: updated?.listerName || "Unknown",
+      listerEmail: updated?.listerEmail || "",
+      listerSource: updated?.listerSource || "lister",
       status: updated?.status,
       createdAt: updated?.createdAt ? new Date(updated.createdAt).toISOString() : new Date().toISOString(),
     });
