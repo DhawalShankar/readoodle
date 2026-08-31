@@ -59,18 +59,24 @@ export async function POST(request: NextRequest) {
 
   const payload = (await request.json()) as NewListingPayload;
 
-  const maxRental = payload.bookPrice * 0.5;
-  if (payload.rentalPricePerWeek > maxRental) {
-    return NextResponse.json(
-      { detail: `Rental price can't exceed 50% of the book price (max ₹${maxRental.toFixed(2)}/week).` },
-      { status: 400 },
-    );
-  }
-  if (payload.securityDeposit > payload.bookPrice) {
-    return NextResponse.json(
-      { detail: `Security deposit can't exceed the book price (max ₹${payload.bookPrice.toFixed(2)}).` },
-      { status: 400 },
-    );
+  const legacyBookPrice = Number(payload.bookPrice ?? 0);
+
+  // Readoodle uses a fixed price model: ₹50/week rental, ₹500 security deposit.
+  // Older validations tied to the book's purchase value are no longer relevant.
+  if (legacyBookPrice > 0) {
+    const maxRental = legacyBookPrice * 0.5;
+    if ((payload.rentalPricePerWeek ?? FIXED_RENTAL_PRICE_PER_WEEK) > maxRental) {
+      return NextResponse.json(
+        { detail: `Rental price can't exceed 50% of the book price (max ₹${maxRental.toFixed(2)}/week).` },
+        { status: 400 },
+      );
+    }
+    if ((payload.securityDeposit ?? 0) > legacyBookPrice) {
+      return NextResponse.json(
+        { detail: `Security deposit can't exceed the book price (max ₹${legacyBookPrice.toFixed(2)}).` },
+        { status: 400 },
+      );
+    }
   }
 
   const book: Book = {
@@ -81,9 +87,9 @@ export async function POST(request: NextRequest) {
     coverColor: payload.coverColor,
     description: payload.description,
     condition: payload.condition,
-    bookPrice: payload.bookPrice ?? 0, // ab optional — sirf record ke liye rakh sakte ho, ya hata do
-    rentalPricePerWeek: FIXED_RENTAL_PRICE_PER_WEEK, // hardcoded ₹50
-    securityDeposit: FIXED_SECURITY_DEPOSIT, // hardcoded ₹500
+    bookPrice: legacyBookPrice,
+    rentalPricePerWeek: FIXED_RENTAL_PRICE_PER_WEEK,
+    securityDeposit: FIXED_SECURITY_DEPOSIT,
     available: true,
     lister: {
       id: (session.user as any).id, // real logged-in user id, no more "local-owner"
