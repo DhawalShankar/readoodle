@@ -47,6 +47,19 @@ export async function POST(request: Request) {
     );
   }
 
+  // One-book-at-a-time: block if user already has an active rental
+  const rentals = await getRentalsCollection();
+  const activeRental = await rentals.findOne({
+    $or: [{ renterId: userId }, { renterEmail: userEmail }],
+    status: { $nin: ["returned", "rejected"] },
+  });
+  if (activeRental) {
+    return NextResponse.json(
+      { detail: `You already have an active rental ("${activeRental.bookTitle || "a book"}"). Please return it before renting another one.` },
+      { status: 409 }
+    );
+  }
+
   const books = await getBooksCollection();
   const book = await books.findOne({ id: bookId });
   if (!book || !book.available) {
@@ -62,7 +75,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const rentals = await getRentalsCollection();
   const rentalId = randomUUID();
   const amount = (book.rentalPricePerWeek || 50) * weeks;
 

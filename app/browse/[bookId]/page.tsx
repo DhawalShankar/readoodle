@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getBooksCollection } from "@/lib/mongodb";
+import { getBooksCollection, getRentalsCollection } from "@/lib/mongodb";
 import type { Book } from "@/types";
 import { CORAL, FONT_DISPLAY, FONT_MONO, INK, PAPER, SAGE } from "@/lib/theme";
 import { formatRupees } from "@/lib/utils";
@@ -34,7 +34,25 @@ export default async function BookDetailPage({
 
   const isReadoodle = book.lister.source === "readoodle";
   const userId = (session.user as any).id;
+  const userEmail = session.user.email?.toLowerCase();
   const isOwnListing = book.lister?.id === userId || (book.lister?.email && book.lister.email === session.user.email);
+
+  // One-book-at-a-time: check if user already has an active rental
+  let hasActiveRental = false;
+  let activeRentalTitle = "";
+  try {
+    const rentalsCol = await getRentalsCollection();
+    const activeRental = await rentalsCol.findOne({
+      $or: [{ renterId: userId }, { renterEmail: userEmail }],
+      status: { $nin: ["returned", "rejected"] },
+    });
+    if (activeRental) {
+      hasActiveRental = true;
+      activeRentalTitle = activeRental.bookTitle || "a book";
+    }
+  } catch {
+    // Fail open — RentForm will re-check
+  }
 
   return (
     <div style={{ backgroundColor: PAPER }} className="min-h-screen">
@@ -113,6 +131,15 @@ export default async function BookDetailPage({
                 </a>
                 .
               </p>
+            ) : hasActiveRental ? (
+              <div>
+                <Button href="/account/rentals" variant="filled">
+                  You're renting "{activeRentalTitle}" — return it first
+                </Button>
+                <p className="mt-2 text-xs text-[#20304D]/60">
+                  You can only rent one book at a time.
+                </p>
+              </div>
             ) : (
               <Button href={`/rent/${book.id}`} variant="filled" className={!book.available ? "pointer-events-none opacity-40" : ""}>
                 {book.available ? "Rent now" : "Currently unavailable"}

@@ -6,7 +6,7 @@ import { CORAL, FONT_MONO, INK, SAGE } from "@/lib/theme";
 import { formatRupees } from "@/lib/utils";
 import DashedCard from "@/components/ui/DashedCard";
 import Button from "@/components/ui/Button";
-import { createRental, fetchProfile } from "@/lib/api";
+import { createRental, fetchActiveRental, fetchProfile } from "@/lib/api";
 import type { Book } from "@/types";
 
 const RENTAL_BUTTON_ID = "pl_TW3XeO6aR51Egs"; // ₹50
@@ -15,6 +15,8 @@ const PAYMENT_SCRIPT_URL = "https://checkout.razorpay.com/v1/payment-button.js";
 export default function RentForm({ book }: { book: Book }) {
   const router = useRouter();
   const [depositPaid, setDepositPaid] = useState<boolean | null>(null); // null = checking
+  const [activeRentalTitle, setActiveRentalTitle] = useState<string | null>(null); // non-null = blocked
+  const [checkingRental, setCheckingRental] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,17 +25,22 @@ export default function RentForm({ book }: { book: Book }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchProfile()
-      .then((profile) => {
-        if (!cancelled) {
-          setDepositPaid(profile.securityDepositPaid);
-          if (!profile.securityDepositPaid) {
-            router.push("/profile?gated=1");
-          }
+    Promise.all([fetchProfile(), fetchActiveRental()])
+      .then(([profile, rentalCheck]) => {
+        if (cancelled) return;
+        setDepositPaid(profile.securityDepositPaid);
+        if (!profile.securityDepositPaid) {
+          router.push("/profile?gated=1");
+        }
+        if (rentalCheck.hasActiveRental && rentalCheck.activeRental) {
+          setActiveRentalTitle(rentalCheck.activeRental.bookTitle);
         }
       })
       .catch(() => {
         if (!cancelled) setDepositPaid(false);
+      })
+      .finally(() => {
+        if (!cancelled) setCheckingRental(false);
       });
     return () => {
       cancelled = true;
@@ -69,12 +76,33 @@ export default function RentForm({ book }: { book: Book }) {
     }
   }
 
-  if (depositPaid === null) {
+  if (depositPaid === null || checkingRental) {
     return (
       <div className="py-8 text-center">
         <p style={{ fontFamily: FONT_MONO }} className="text-sm text-[#20304D]/60">
-          Checking your security deposit status...
+          Checking your account status...
         </p>
+      </div>
+    );
+  }
+
+  if (activeRentalTitle) {
+    return (
+      <div className="mt-6 border-2 border-dashed p-6 text-center" style={{ borderColor: CORAL }}>
+        <p className="font-semibold text-lg" style={{ color: INK }}>
+          You Already Have an Active Rental
+        </p>
+        <p className="mt-2 text-sm text-[#20304D]/70">
+          You're currently renting <strong>"{activeRentalTitle}"</strong>. You can only rent one book at a time — please return it first.
+        </p>
+        <div className="mt-6 flex justify-center gap-4">
+          <Button href="/account/rentals" variant="filled">
+            View My Rentals →
+          </Button>
+          <Button href="/browse" variant="outline">
+            Browse Books
+          </Button>
+        </div>
       </div>
     );
   }

@@ -3,8 +3,8 @@
 import { use, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { Book } from "@/types";
-import { FONT_DISPLAY, FONT_MONO, INK, PAPER } from "@/lib/theme";
-import { fetchBook } from "@/lib/api";
+import { CORAL, FONT_DISPLAY, FONT_MONO, INK, PAPER } from "@/lib/theme";
+import { fetchActiveRental, fetchBook } from "@/lib/api";
 import RentForm from "@/components/rent/RentForm";
 import Button from "@/components/ui/Button";
 
@@ -16,12 +16,20 @@ export default function RentPage({ params }: { params: Promise<{ bookId: string 
   const { data: session } = useSession();
   const [book, setBook] = useState<Book | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [activeRentalTitle, setActiveRentalTitle] = useState<string | null>(null);
 
   useEffect(() => {
     if (!bookId) return;
     fetchBook(bookId)
       .then(setBook)
       .catch(() => setError("Couldn't load this book details — please try again."));
+    fetchActiveRental()
+      .then((res) => {
+        if (res.hasActiveRental && res.activeRental) {
+          setActiveRentalTitle(res.activeRental.bookTitle);
+        }
+      })
+      .catch(() => { /* ignore — RentForm will re-check */ });
   }, [bookId]);
 
   if (error) {
@@ -62,6 +70,29 @@ export default function RentPage({ params }: { params: Promise<{ bookId: string 
             </Button>
             <Button href="/lister" variant="filled">
               Go to Lister Dashboard
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (activeRentalTitle) {
+    return (
+      <div style={{ backgroundColor: PAPER }} className="min-h-screen">
+        <div className="mx-auto max-w-3xl px-6 py-12 text-center">
+          <h1 style={{ fontFamily: FONT_DISPLAY }} className="text-4xl font-bold">
+            One book at a time
+          </h1>
+          <p className="mt-3 text-[#20304D]/70">
+            You're currently renting <strong>"{activeRentalTitle}"</strong>. Return it first, then come back to rent "{book.title}".
+          </p>
+          <div className="mt-8 flex justify-center gap-4">
+            <Button href="/account/rentals" variant="filled">
+              View My Rentals →
+            </Button>
+            <Button href="/browse" variant="outline">
+              Browse Books
             </Button>
           </div>
         </div>

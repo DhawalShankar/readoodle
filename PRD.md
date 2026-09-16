@@ -1,365 +1,197 @@
-# Product Requirements Document (PRD) — Readoodle
+# Product Requirements Document (PRD) — Readoodle v2.0
 
-**A lean, revenue-focused book rental marketplace built on Next.js.**
+**A lean, revenue-focused book rental marketplace — now with author-direct ebook sales.**
 
 ---
 
 ## 1. Executive Summary
 
-**Readoodle** is a marketplace for renting books instead of buying them. Users pay **₹50 for 7 days** per book — period. Every rental includes a hand-doodled bookmark. Listers earn **98% of every rental** (we take a flat 2% commission). Readoodle is designed to scale profitably on a single Next.js codebase, operating from one or more pickup points in one or more cities.
+**Readoodle** is a marketplace for renting physical books instead of buying them, built on a single Next.js codebase. Users pay ₹50 for 7 days per book. Every rental includes a hand-doodled bookmark. Listers earn 98% of every rental.
 
-### Vision
-Make reading affordable, remove the commitment barrier of buying, and build a memorable brand around collectable doodle bookmarks — all while generating predictable recurring revenue with minimal operational overhead.
+**v2.0 adds a second, complementary revenue line: direct ebook sales from self-published and regional-language authors**, reusing Readoodle's existing users, listers, pickup-point network, and Razorpay/UPI payout rails. No new app, no new brand, no new trust to build from zero — same "books" audience, same city, same infra.
 
-### Launch City
-**Kanpur, Uttar Pradesh.** Pickup-only, in-person fulfillment, no shipping at MVP.
+### Why This Fits Readoodle (Not a Separate Product)
+- Readoodle already has book-loving users in Kanpur who will convert easily to "buy the ebook" as an upsell alongside "rent the physical copy."
+- Listers are already individuals who own and care about books — a natural bridge to self-published local authors wanting a distribution channel.
+- Pickup points already function as informal community book hubs — perfect physical touchpoints for a "local author spotlight" shelf, digital or physical.
+- Payments, payouts, and admin tooling are already built. Ebooks add a content type, not new infrastructure.
 
----
+### What This Is Not
+This is **not** a data-scraping or PDF-vault play. Every ebook on Readoodle falls into one of two clean categories:
+1. **Public domain / open-license** text (verified, small curated set — used for catalog depth and demos).
+2. **Author-licensed** — a real self-published or small-press author explicitly signs a one-page agreement and earns a royalty on every sale.
 
-## 2. Business Model at a Glance
-
-| Metric | Value |
-|--------|-------|
-| **Rental Price** | ₹50 per book, per 7 days (fixed platform-wide) |
-| **Security Deposit** | ₹500 one-time per user (paid once on profile, unlocks all rentals) |
-| **Late Fine** | ₹10/day, uncapped (strong incentive to return on time) |
-| **Platform Commission** | Flat 2% on every rental transaction |
-| **Lister Payout** | 98% of rental price, released T+2 days after pickup confirmed |
-| **Bookmark Cost** | ₹2-5 per bookmark (bulk printed), included in rental |
-| **Target Margin** | ~₹8-15 per rental after bookmark and operations cost |
-
-### Revenue Per Rental (Example)
-```
-Renter pays: ₹50
-↓
-Readoodle takes: ₹1 (2% commission)
-Readoodle pays lister: ₹49 (T+2)
-Readoodle keeps: ₹1 - ₹4 (bookmark cost) = -₹3 to ₹1
-```
-
-**Profitability comes from:**
-- **Volume**: 100 rentals/month in one city = ₹200 commission/month. 5 cities × 500 rentals/month = ₹5,000/month.
-- **Late fees**: Uncapped ₹10/day late fines accumulate to ₹50-100+ per overdue rental. 10% overdue rate → significant secondary revenue.
-- **Readoodle's own inventory**: We can list our own books from our own pickup point and keep **100% of rental** (no payout), minus bookmark cost.
-- **Membership upgrades** (future): Optional "unlimited rentals" plan, referral bonuses, etc.
+No ebook is added without a resolved rights status. This is a structural rule, enforced in the schema (see §5), not just a policy.
 
 ---
 
-## 3. Core Features (MVP — Live & Working)
+## 2. Business Model at a Glance (Updated)
 
-### 3.1 Authentication & Membership
-- Email/password signup (NextAuth.js)
-- One-time ₹500 security deposit payment (Razorpay)
-- Membership unlocks renting and listing immediately — no approval gate
-- Profile stores name, email, address, phone (for pickup coordination)
+| Line | Metric | Value |
+|---|---|---|
+| **Physical Rental** | Rental Price | ₹50 / 7 days |
+| | Lister Payout | 98% (flat 2% commission) |
+| | Late Fine | ₹10/day uncapped |
+| **Ebook Sales (New)** | Price | Author-set, typically ₹20–₹99 (regional ebook pricing norm) |
+| | Author Royalty (Track B) | 70% |
+| | Platform Commission | 15% |
+| | Referring Pickup Point Bonus | 15% (see §3.3) |
+| | Public Domain Ebook Price | ₹10–₹20 flat (curation/formatting fee only, no royalty) |
+| | PD Split | 60% Platform / 40% Pickup Point |
 
-### 3.2 Browse & Rent
-- **Book catalog**: search, filter by availability, sorted by recent
-- **Book detail**: title, author, condition, lister (Readoodle or user), pickup location, price (always ₹50/7 days)
-- **One-click checkout**: select rental duration, confirm pickup point, pay ₹50 + any prior late fees
-- **Rental confirmation**: due date displayed with doodle bookmark card (design: dashed-border index card, rotated at angle, hand-drawn text)
-- **Only approved rentals show on homepage** (not pending admin approval)
-
-### 3.3 My Account
-- **Active Rentals**: list of books being rented, due date, days remaining, option to extend/renew
-- **Rental History**: past rentals for re-renting
-- **Security Deposit Status**: shows ₹500 paid, used as unlock for all future rentals
-- **Bookmarks Collected** (future): visual gallery of doodle designs collected
-
-### 3.4 Lister Dashboard
-- **Add Books**: upload book details (title, author, ISBN, condition)
-- **My Listings**: active books, number of times rented, earnings so far
-- **Earnings & Payouts**: see how much is owed (T+2 pending) and when it will be released
-- **Pickup Point**: users specify one pickup location (their address) — all their books are picked up there
-
-### 3.5 Admin Panel
-- **User Management**: view all users, security deposit status, flags
-- **Book Inventory**: all books (Readoodle's + listers'), track active rentals, mark as damaged
-- **Rental Approvals**: new rental requests → approve/reject (confirmation triggers T+2 payout countdown)
-- **Payouts**: see which listers are owed money, batch release payouts
-- **Analytics**: monthly rentals, commission earned, late fees collected, top books/listers
-
-### 3.6 Doodle Bookmarks
-- **Physical bookmarks** (Readoodle's inventory): printed in bulk, handed at pickup
-- **Digital bookmarks** (Lister's books): PDF sent via email after return, renter prints at home
-- Same designs in both formats, seasonal sets (e.g., "August Animals", "September Stars")
-- Branding: dashed-border index card, hand-drawn style, fits the library due-date card motif
+The ebook line doesn't replace the rental economics — it rides alongside it, using the same checkout, same accounts, same payout batch.
 
 ---
 
-## 4. Current Tech Stack (Production-Ready)
+## 3. Ebook Module — What's New
 
-- **Frontend**: Next.js 16 (App Router, "use client" components), React, Tailwind CSS
-- **Backend**: Next.js API Routes (server-side rendering + API endpoints in same codebase)
-- **Database**: MongoDB (single collection pattern, simple schemas)
-- **Auth**: NextAuth.js with JWT sessions
-- **Payments**: Razorpay (payment collection + webhook handling)
-- **Hosting**: Vercel (serverless, auto-scaling, no DevOps needed)
+### 3.1 Two Content Tracks
 
-**No separate services needed**: one Node.js/Next.js app, one MongoDB database, one Razorpay account.
+**Track A — Public Domain / Open License**
+- Sourced from Wikisource, NDLI-verified-clean items, or explicit CC-licensed text.
+- No royalty owed. Used to seed the catalog fast and cheap (target: 100–200 titles at launch).
+- **Do not attempt to scrape or scan indiscriminately** — verified PD Indic text is a small, curated pool, not a large one. Treat this as demo/proof content, not the growth engine.
 
----
+**Track B — Author-Licensed (the real growth line)**
+- Self-published/regional authors sign a simple one-page agreement: rights granted, 70% royalty, revocable any time.
+- Author provides their own manuscript file (usually already have a Word/PDF — no scanning needed for most of this volume).
+- This is where real catalog growth comes from. Target: 10–20 pilot authors in the first phase.
 
-## 5. Key Design Decisions (Why We're Profitable)
+### 3.2 Why Authors Say Yes (reuse Readoodle's existing playbook from §6.3 of v1 — direct outreach works)
+- 70% royalty (beats Kindle's typical regional-language net take).
+- No exclusivity required to start.
+- Simple onboarding, fast payout cadence (same T+2 rails already built for listers).
+- Local distribution: their book appears at pickup points readers already trust, not just buried in an app store.
 
-### 5.1 Fixed Pricing = Simplicity
-- **No per-lister pricing negotiations.** Everyone's book rents for ₹50/7 days. Removes complex pricing logic, dashboard clutter, and customer confusion.
-- **Listers know exactly what they earn** (₹49 per rental, T+2) — predictable revenue attracts more listers.
+### 3.3 Pickup Points Become Ebook Nodes Too
+- Existing Readoodle pickup points (home/shop/café listers already using the app) can opt in as **"Featured Shelf" nodes**: a QR code at the physical pickup point links to that node's curated ebook picks (local author spotlight).
+- A pickup point that drives an ebook sale via its QR/referral link earns a **15% referral bonus** on Track B sales (bookstore-style — see original Kavach revenue logic), reusing the payout rails already built for lister payouts.
+- This is optional and additive — a rental-only pickup point loses nothing by not participating.
 
-### 5.2 Pickup-Only = Zero Shipping Costs
-- **No couriers, no fulfillment center, no packaging logistics.** Renters and listers coordinate pickup in person.
-- **Profit is immediate**: ₹50 in, ₹1 commission + ₹3 bookmark = ₹4 net per rental. Scales linearly with volume.
-
-### 5.3 One-Time Security Deposit = Conversion Funnel
-- **₹500 one-time, not per rental** → low friction for repeat renters
-- **₹500 paid once unlocks unlimited rentals** → incentive to keep using the platform
-- **Security deposit is refundable** → reduces trust barrier for first-timers
-
-### 5.4 Uncapped Late Fines = Behavioral Economics
-- **₹10/day compounds:** missing a 7-day deadline by 3 days = +₹30 fine (60% price increase)
-- **Renters are motivated to return on time** instead of treating it as optional
-- **Secondary revenue stream** when people are late (5% of people late → 5% extra revenue per month)
-
-### 5.5 Flat 2% Commission = Lister Attraction
-- **2% is standard-to-generous** compared to other marketplaces (Airbnb takes 3%, eBay 12%, DoorDash 25%)
-- **Listers see that Readoodle isn't skimming** — they keep 98% motivates quality inventory
-
-### 5.6 T+2 Payouts = Cash Flow Control
-- **Funds land in Readoodle's account first** → 2-day float allows for dispute resolution and chargeback handling
-- **Automatic payouts on day 3** → listers can't complain about payment speed
-- **Better than T+0** (immediate) because we have time to verify pickup, handle disputes, and process refunds if needed
+### 3.4 Delivery & Access Control (No DRM Theater, Just Standard Practice)
+- Ebook purchases are tied to the buyer's existing Readoodle account (already authenticated via NextAuth.js).
+- Delivery via a short-lived signed download URL (Vercel/S3 signed link, expiring after use or N hours) — not a permanent public file.
+- Optional lightweight watermark (buyer email/ID stamped into the PDF footer) to discourage casual redistribution — cheap to implement, no need for heavier DRM at MVP scale.
+- Nothing here requires hiding files from the internet or avoiding standard hosting — the content is licensed, so normal signed-URL delivery is sufficient and legally uncomplicated.
 
 ---
 
-## 6. Operational Best Practices (Keep It Simple)
+## 4. Core Features (MVP Additions to Existing Stack)
 
-### 6.1 Product
-- **No feature creep.** Stick to: browse, rent, approve, payout. Don't add wishlists, ratings, messaging, or community features until you have 10k active users.
-- **One city, one app.** Multi-city scaling is a different problem — focus on proving the model in Kanpur first.
-- **No guest checkout.** Users must have a membership (paid deposit) to rent. Reduces fraud and no-shows.
-- **Fixed prices everywhere.** Variable pricing per lister = support nightmare and decision paralysis for renters. Keep it at ₹50/7 days.
+### 4.1 Author Onboarding (New)
+- Simple form: name, contact, UPI ID (reuse existing lister payout field), manuscript upload, one-page licensing agreement (e-signed via a basic checkbox + typed name confirmation — no need for a heavy e-sign vendor at this scale).
+- Admin reviews and marks `rights_verification.status = verified` before the title can go live — manual gate at this volume, same pattern as the existing manual rental approval.
 
-### 6.2 Operations
-- **Pickup points are real addresses.** Readoodle's own pickup point(s) + lister addresses (no virtual/vague pickup).
-- **Admin approval for rentals.** Initially, every new rental requires admin OK to catch fraud/no-shows. Auto-approve later once you have confidence in the user base (or use a simple rule: first-time renters = manual, repeat customers = auto).
-- **Manual payout processing.** Use a spreadsheet or simple admin panel tool to batch release payouts on day 3. Automate only when you have 100+ listers.
-- **No fancy damage/loss automation.** When a renter damages a book, admin marks it in the dashboard, forfeits the deposit, and sends the lister a message. Simple.
+### 4.2 Ebook Catalog (New, alongside existing Book Browse)
+- New content type on existing `books` collection (or a parallel `ebooks` collection) — same catalog page, filterable by "Rent Physical" vs "Buy Ebook."
+- Track A titles marked `rights_type: public_domain`, Track B marked `rights_type: author_licensed`.
 
-### 6.3 Marketing & Growth
-- **First 100 users = direct invite.** Don't spend on ads yet. Invite friends, book clubs, students, libraries. Build the habit first.
-- **First 50 listers = direct outreach.** Find local book lovers, give them a pitch: "List your extra books, earn ₹49 per rental, we handle everything." Seed 200-300 books.
-- **Bookmark gamification = free virality.** "Collect all 12 designs this season" drives repeat rentals and sharing (users brag about their collection on Instagram).
-- **Word-of-mouth flywheel:** renters → collect bookmarks → share on social → more renters → attracts listers → more inventory → more rentals.
+### 4.3 Checkout (Extends Existing Razorpay Flow)
+- Same Razorpay integration already live for deposits/rentals — ebook purchase is just a new product type in the same payment flow.
+- On success: generate signed delivery URL, apply watermark, log to `customer_licenses`.
 
-### 6.4 Data Privacy & Trust
-- **GDPR-style privacy** (even though you're in India): store minimal data (name, email, address, phone). Delete after 1 year if account inactive.
-- **PCI compliance:** never store credit card data. Razorpay handles that. Just store payment IDs and status.
-- **Transparent T+2 payouts:** show listers exactly when their money is coming. Trust > growth.
+### 4.4 Author Dashboard (Extends Existing Lister Dashboard)
+- Reuse the Lister Dashboard UI pattern: "My Titles," "Earnings So Far," "Payout Status (T+2)."
+- Authors see the same trusted, transparent payout experience listers already get.
+
+### 4.5 Admin Panel (Extends Existing Admin)
+- New tab: **Rights Verification Queue** — pending author agreements, PD source citations, approve/reject.
+- New tab: **Ebook Payouts** — batch release alongside existing lister payout batching.
 
 ---
 
-## 7. Revenue Playbook (How to Scale)
+## 5. Database Schema Additions
 
-### 7.1 Core Revenue (Per Rental)
-```
-₹50 rental fee
-  - ₹49 to lister (T+2)
-  - ₹1 commission (Readoodle keeps)
-  - ₹3 bookmark cost
-Net: -₹2 per rental (break-even with operational costs)
+```js
+// Extends existing MongoDB collections — same DB, same patterns as v1
+
+rights_verification: {
+  book_id, rights_type: enum('public_domain','author_licensed'),
+  author_death_year, license_type, source_citation,  // Track A
+  verified_status: enum('pending','verified','rejected'),
+  verified_by, verified_date
+}
+
+licensing_agreements: {
+  book_id, author_id, upi_id, royalty_pct: 70,
+  rights_granted, revocable: true, start_date, status
+}
+
+ebook_listings: {
+  ebook_id, rights_verification_id, price, file_url,
+  featured_pickup_point_id: nullable,  // for referral bonus tracking
+  active: boolean
+}
+
+customer_licenses: {
+  customer_id, ebook_id, purchase_date, signed_url_token, watermark_id
+}
+
+ebook_sales: {
+  ebook_id, sale_date, price, platform_share, author_share, pickup_point_referral_share
+}
 ```
 
-**To be profitable at scale, you need:**
-1. **Late fees** (₹10/day uncapped) — 5-10% late rate = ₹25-50k extra per 10k rentals
-2. **Readoodle's own inventory** — keep 100% of ₹50 per rental, minus bookmark cost = ₹47 profit per rental
-3. **High volume** — 1,000 rentals/month = ₹1,000 pure commission, plus late fees
-
-### 7.2 Future Revenue Streams (Not MVP, But Roadmap)
-- **Damage insurance add-on:** ₹5 optional per rental, covers accidental damage (reduces chargeback/dispute overhead)
-- **Priority access pass:** ₹30/month unlimited "fast lane" for rare/new releases (first access before general listing)
-- **Lister pro tier:** ₹50/month for advanced listers (analytics dashboard, auto-pricing suggestions, priority payouts)
-- **Affiliate links:** link to Goodreads / Amazon for users who want to buy after renting (tiny but scalable)
-- **Advertising:** once you have 50k+ monthly active users, subtle "sponsor a book" (ads from publishers / bookstores) — like a shelf placement fee
-
-### 7.3 Expansion Strategy
-**Month 1-3: Kanpur only**
-- 50-100 active users
-- 200-300 books listed
-- 300-500 rentals/month
-- Revenue: ₹300-500 in commission + late fees, -₹600-1200 in bookmark costs = net -₹300-700/month (break-even with server costs)
-
-**Month 4-6: Double down in Kanpur**
-- 200+ active users
-- 500+ books
-- 1000+ rentals/month
-- Revenue: ₹1000 in commission + ₹5000 in late fees = ₹6000, -₹3000 bookmark costs = ₹3000/month profit
-
-**Month 7-12: Seed second city (Delhi/Bangalore/Hyderabad)**
-- Same playbook: invite 50 renters + 50 listers, repeat
-- Each city follows the same simple Next.js codebase (just change `NEXT_PUBLIC_CITY="Delhi"`)
-
-**Month 12+: 5-10 cities**
-- 5000+ total active users
-- 50k+ monthly rentals
-- ₹50k+ monthly revenue from commissions + late fees
-- Break even on platform costs, start investing in marketing/team
-
-### 7.4 Unit Economics Target
-- **Customer Acquisition Cost (CAC):** ₹0 (word-of-mouth only, for now)
-- **Lifetime Value (LTV):** 50 rentals × ₹1 commission = ₹50 per renter + ₹100 security deposit (float on it for 1 year) = ₹150 LTV
-- **LTV:CAC ratio:** ∞ (free growth) — works as long as word-of-mouth holds
+**Hard rule enforced at the query/insert layer:** an `ebook_listings` row cannot be created unless a matching `rights_verification.verified_status = 'verified'` row exists. This should be a database constraint or a guarded API check, not just a process — the same discipline as Readoodle's existing "no guest checkout" rule.
 
 ---
 
-## 8. Risk Mitigation & Known Issues
+## 6. Roadmap (Fits Inside Existing Phase Structure)
 
-### 8.1 Current Issues (MVP)
-1. **No email verification** — users can sign up with fake emails. Fix: add email confirmation before deposit payment.
-2. **No phone verification** — lister pickup points may be fake. Fix: call or SMS verification of phone number.
-3. **No rate limiting** — API can be brute-forced. Fix: add Redis rate limiting on login/rental endpoints.
-4. **Manual admin approval** — all rentals need manual OK. Scalability: auto-approve after 10 successful rentals by a user.
-5. **No automated late fees** — relies on admin marking overdue. Fix: cron job nightly to calculate accrued late fees.
-6. **No cancellation policy** — renters can't cancel. Fix: allow 24hr cancellation for full refund (before pickup).
+### Phase 1: Ebook Module MVP (Weeks 1–4, runs alongside existing Phase 1 hardening)
+- [ ] Build `rights_verification`, `licensing_agreements`, `ebook_listings` schema
+- [ ] Seed 100–200 Track A (public domain) titles from Wikisource
+- [ ] Build author onboarding form + one-page agreement flow
+- [ ] Recruit 5–10 pilot Track B authors via direct outreach (same playbook as v1 §6.3: WhatsApp groups, book fairs, ask existing listers who they know)
+- [ ] Extend checkout for ebook purchase; signed-URL delivery + watermark
+- [ ] Extend Lister Dashboard pattern for authors
 
-### 8.2 Future Protections (Post-MVP)
-- **ID verification** (Aadhar/PAN) for listers to reduce fraud
-- **Address verification** (Google Maps + pincode validation) to confirm pickup points
-- **Insurance option** (₹5-10 per rental) for accidental damage
-- **Reputation system** (1-5 star ratings on listers and renters) to flag problem users
-- **SMS reminders** (1 day before due date) to reduce late returns
+**Milestone:** at least 5 real author-licensed ebooks live and purchasable, not just PD filler.
 
-### 8.3 What NOT to Build (Scope Lock)
-- **Shipping/couriers** — complexity, cost, logistics burden. Pickup only.
-- **Mobile app** — web works fine. Native apps = 2x dev effort for 20% extra users (initially).
-- **Video/photo verification** — too manual, slows approvals. Trust the deposit.
-- **Subscription plans** — pay-per-rental is simpler and more flexible than recurring billing.
-- **Peer-to-peer messaging** — just use email. Adds complexity, support overhead, moderation.
+### Phase 2: Pickup Points as Ebook Nodes (Weeks 5–8)
+- [ ] "Featured Shelf" QR code flow at opted-in pickup points
+- [ ] Referral bonus tracking + payout extension
+- [ ] Scale Track B to 20–50 authors using Phase 1 pilots as proof/testimonials
+
+### Phase 3: Scale (Month 3+)
+- [ ] Approach 1–3 small regional publishers with real revenue data from Track B as proof
+- [ ] Evaluate demand for an AI-training sandbox access tier on the opted-in corpus (separate consent required — not bundled with retail rights)
 
 ---
 
-## 9. Roadmap (Next.js Only, Keep It Light)
+## 7. Success Metrics (Ebook Module)
 
-### Phase 0: MVP (Complete ✅)
-- ✅ User signup + membership deposit
-- ✅ Book listing (renters can list)
-- ✅ Browse & rent (fixed ₹50/7 days)
-- ✅ Admin approval (manual rental OK)
-- ✅ Payouts (manual T+2 release)
-- ✅ Razorpay integration
-- ✅ Doodle bookmark motif on homepage
-
-### Phase 1: Operational Hardening (Weeks 1-4)
-- [ ] Email verification at signup (confirm email before deposit charged)
-- [ ] Phone number validation (SMS or call)
-- [ ] API rate limiting (prevent brute force)
-- [ ] Automated late fee calculation (cron job nightly)
-- [ ] Admin dashboard for rentals → auto-approve after Nth successful rental
-- [ ] CSRF tokens on all forms
-
-**Why:** Stop fraud, reduce manual admin work, protect against attacks.
-
-### Phase 2: Trust & Retention (Weeks 5-8)
-- [ ] Automated SMS reminders (1 day before due, 1 day after due)
-- [ ] Late fine email notifications (auto-email on day overdue)
-- [ ] 24hr rental cancellation window (full refund if renter cancels before pickup)
-- [ ] Damage/loss dispute flow (admin marks damaged, sends notification to both parties)
-- [ ] Lister reputation score (5-star system, shown on their listings)
-
-**Why:** Reduce no-shows, improve return rate, reduce disputes.
-
-### Phase 3: Growth & Engagement (Weeks 9-12)
-- [ ] Bookmark collection gallery (show which designs user has collected)
-- [ ] "Complete the set" gamification (push notifications: 2/12 designs collected this season)
-- [ ] Simple book search (Ctrl+F style, no Elasticsearch needed yet)
-- [ ] Wishlist (save books for later)
-- [ ] Rental renewal (extend due date for another 7 days at checkout)
-
-**Why:** Increase repeat rentals, improve engagement, drive repeat visits.
-
-### Phase 4: Revenue Expansion (Weeks 13-16)
-- [ ] Damage insurance add-on (optional ₹5/rental, covers accidental damage)
-- [ ] Priority access tier (₹30/month, get new/rare books first)
-- [ ] Lister pro dashboard (showing their earnings, top books, customer ratings)
-- [ ] Second city support (Kanpur → Delhi multi-city in same codebase)
-- [ ] Bulk payout automation (auto-release listers' T+2 payouts without manual OK)
-
-**Why:** Diversify revenue, improve lister loyalty, scale to new cities.
-
-### Phase 5: Scalability (Weeks 17-20)
-- [ ] Pagination for all listing endpoints (prevent huge response payloads)
-- [ ] Redis caching (cache book catalog, reduce DB load)
-- [ ] CDN for bookmark images (faster delivery, less server load)
-- [ ] Analytics dashboard (revenue trends, top cities, top books, user cohorts)
-- [ ] Public API for partners (allow 3rd parties to embed Readoodle widget on their sites)
-
-**Why:** Handle 10k+ monthly active users without DB melting down.
+| Metric | Target (Month 1) | Target (Month 3) |
+|---|---|---|
+| PD titles live | 100–200 | 300–500 |
+| Author-licensed titles live | 5–10 | 30–50 |
+| Ebook sales/month | 20–50 | 200–500 |
+| Author retention (repeat listing) | — | 60%+ |
+| Pickup points opted into "Featured Shelf" | 2–3 | 8–10 |
+| Zero unresolved-rights titles in system | ✅ enforced structurally | ✅ |
 
 ---
 
-## 10. Success Metrics & KPIs
+## 8. What NOT to Build (Scope Lock, Extends v1 §8.3)
 
-Track these weekly:
-
-| Metric | Target (Month 1-3) | Target (Month 4-6) |
-|--------|--------------------|--------------------|
-| Active Users | 50-100 | 200-400 |
-| Books Listed | 200-300 | 500-1000 |
-| Monthly Rentals | 300-500 | 1000-1500 |
-| Return-on-time % | 80%+ | 90%+ |
-| Lister retention | 50% (repeat list) | 70%+ |
-| Avg rental per user | 1.2 | 2.5 |
-| Commission/month | ₹300-500 | ₹1000-1500 |
-| Late fee/month | ₹200-300 | ₹2000-3000 |
-| Net margin | -20% (loss) | +5% (breakeven) |
+- **No content scraping or bulk PD aggregation** — the pool is small; don't waste engineering time chasing volume that isn't there.
+- **No bundling retail-sale consent with AI-training consent** — always separate opt-ins if the sandbox tier is ever built.
+- **No heavy DRM** — signed URLs + light watermarking is sufficient; anything more is engineering effort the MVP doesn't need.
+- **No exclusivity requirements for authors at pilot stage** — let them keep selling elsewhere too; exclusivity kills early sign-up.
+- **No separate app or brand** — this lives inside Readoodle's existing Next.js codebase, database, and payout rails. If it ever outgrows that, that's a Month 6+ problem, not a Week 1 problem.
 
 ---
 
-## 11. Frequently Asked Questions
+## 9. Legal & Trust Principles (Non-Negotiable)
 
-**Q: Why fixed ₹50/7 days pricing?**
-A: Simplicity. No negotiation, no pricing wars, renters know what to expect, listers know what they earn. One number is easier to market ("₹50 rentals") than variable pricing.
-
-**Q: How do we prevent no-shows?**
-A: Security deposit. ₹500 upfront creates real consequences. Combined with email reminders (phase 2), late fees, and lister ratings, no-shows should be <5%.
-
-**Q: What if a lister lists the same book 10x (10 copies)?**
-A: They list each copy separately as a different inventory item. We track availability per copy, not per title. Allows for "Atomic Habits - Copy 1", "Atomic Habits - Copy 2", etc.
-
-**Q: Can renters leave a rented book at a different pickup point than they rented from?**
-A: No (MVP). Return to the same point you rented from. This keeps logistics simple and avoids inventory redistribution problems.
-
-**Q: Do we verify address before accepting a lister?**
-A: Phase 2: yes (via Google Maps + pincode). Phase 1 (MVP): just email confirmation.
-
-**Q: How do we handle returns?**
-A: Renter drops the book off at the pickup point (Readoodle's or lister's) before the due date. No receipt required — just leave it at the desk/doorstep (for Readoodle points) or with the lister. Admin marks as returned once notified.
-
-**Q: What about late returns?**
-A: ₹10/day fine accrues automatically. After 30 days late, admin can mark as "lost" and charge the full book value + forfeit deposit. Renter gets flagged for future restrictions.
-
-**Q: Can we ship books?**
-A: Not in MVP. Shipping = ₹50-100 cost per book, makes the margin negative. Pickup-only keeps us profitable.
-
-**Q: How many cities can we launch?**
-A: As many as we want — each city is just a flag in the database. One Kanpur codebase works for Delhi, Mumbai, Bangalore, etc. Just change pickup points and run the same app.
+1. No ebook enters the catalog without a resolved, recorded rights status (PD citation or signed author agreement).
+2. Authors can revoke access any time; enforced within 48 hours.
+3. Pickup points/listers are never asked to misrepresent the origin of any content.
+4. All delivery mechanisms (signed URLs, watermarking) exist to enforce legitimate purchases, not to conceal anything — there is nothing in the catalog that needs hiding.
+5. Rights-verification records are auditable on request — this is a credibility asset for pitching authors, pickup points, and (later) publishers.
 
 ---
 
-## 12. Summary
-
-Readoodle is designed to be **simple, profitable, and scalable**:
-- **Fixed pricing** (₹50/7 days) removes complexity
-- **Pickup-only** eliminates logistics costs
-- **Flat 2% commission** attracts listers
-- **Uncapped late fees** drive behavioral compliance
-- **One Next.js codebase** = minimal tech overhead
-
-The unit economics work: ₹1 commission per rental + late fee revenue + Readoodle's own inventory = profitability at 500+ rentals/month in a single city. Multi-city replication is identical — no new engineering needed, just seed users and inventory.
-
-**Launch goal: Profitable by Month 6 in Kanpur. Scale to 5 cities by Month 12.**
-
----
-
-**Document Status:** Final (MVP Launch 2026)  
-**Last Updated:** August 31, 2026  
+**Document Status:** Draft — Ebook Module Addition
+**Base Document:** Readoodle PRD v1 (MVP Complete)
 **Owner:** Readoodle Team

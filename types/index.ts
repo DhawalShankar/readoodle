@@ -1,6 +1,6 @@
 export type BookmarkKind = "physical" | "digital";
 export type ListingSource = "readoodle" | "lister";
-export type RentalStatus = "active" | "overdue" | "returned";
+export type RentalStatus = "active" | "overdue" | "returned" | "pending_approval" | "rejected";
 export type PayoutStatus = "pending" | "released";
 
 export interface PickupPoint {
@@ -8,7 +8,7 @@ export interface PickupPoint {
   label: string; // e.g. "Readoodle — Swaroop Nagar" or a lister's registered address
   addressLine: string;
   city: string;
-  pickupTimeSlot: string; // e.g. "Mon–Sat, 6 PM – 9 PM"
+  pickupTimeSlot?: string; // e.g. "Mon–Sat, 6 PM – 9 PM"
 }
 
 export interface Lister {
@@ -55,7 +55,7 @@ export interface Rental {
   weeks: number;
   rentalFeeTotal: number;
   depositHeld: number;
-  bookmarkKind: BookmarkKind;
+  bookmarkKind?: BookmarkKind;
 }
 
 export interface Payout {

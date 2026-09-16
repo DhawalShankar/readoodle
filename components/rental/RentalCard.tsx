@@ -17,7 +17,7 @@ interface EnhancedRentalProps {
 export default function RentalCard({ rental }: EnhancedRentalProps) {
   const remaining = daysUntil(rental.dueDateISO);
   const isReturned = rental.status === "returned";
-  const isPending = (rental.status as any) === "pending_approval";
+  const isPending = rental.status === "pending_approval";
   const overdue = !isReturned && remaining < 0;
   const overdueDays = overdue ? Math.abs(remaining) : 0;
   const lateFine = overdue ? calculateLateFine(rental.dueDateISO) : (rental.lateFine || 0);

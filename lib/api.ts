@@ -16,7 +16,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   if (!res.ok) {
-    throw new Error(`Readoodle API error ${res.status}: ${await res.text()}`);
+    let message = `Readoodle API error ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body.detail) message = body.detail;
+    } catch {
+      // response wasn't JSON — fall back to the generic message
+    }
+    throw new Error(message);
   }
   return res.json();
 }
@@ -45,6 +52,11 @@ export function createRental(payload: { bookId: string; weeks: number }) {
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+/** GET /rentals/active/ — check if user has an active rental (one-book-at-a-time). */
+export function fetchActiveRental() {
+  return request<{ hasActiveRental: boolean; activeRental: { id: string; bookTitle: string; status: string } | null }>(`/rentals/active/`);
 }
 
 /** GET /rentals/mine/ — "My Rentals" dashboard. */
